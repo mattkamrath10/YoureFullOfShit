@@ -49,6 +49,7 @@ export async function getPublishedStories(): Promise<Story[]> {
     .from("stories")
     .select(PUBLISHED_SELECT_WITH_COUNTS)
     .eq("status", "published")
+    .eq("is_demo", false)
     .order("created_at", { ascending: false });
 
   if (!withCounts.error) {
@@ -62,6 +63,7 @@ export async function getPublishedStories(): Promise<Story[]> {
     .from("stories")
     .select(PUBLISHED_SELECT_BASIC)
     .eq("status", "published")
+    .eq("is_demo", false)
     .order("created_at", { ascending: false });
 
   if (basic.error) throw withCounts.error;
