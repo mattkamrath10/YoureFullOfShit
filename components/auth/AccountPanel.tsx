@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { AvatarUpload } from "@/components/auth/AvatarUpload";
 import {
@@ -10,11 +10,33 @@ import {
   authLinkClass,
   authPrimaryBtnClass,
 } from "@/components/auth/AuthCard";
+import { createClient } from "@/lib/supabase/client";
 
 export function AccountPanel() {
   const { user, loading, isSignedIn, signOut } = useAuth();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!user?.id || !isSignedIn) {
+      setIsAdmin(false);
+      return;
+    }
+    const supabase = createClient();
+    supabase
+      .from("profiles")
+      .select("is_admin")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled) setIsAdmin(Boolean(data?.is_admin));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, isSignedIn]);
 
   if (loading) {
     return (
@@ -86,6 +108,15 @@ export function AccountPanel() {
           </dd>
         </div>
       </dl>
+
+      {isAdmin ? (
+        <Link
+          href="/admin/stories"
+          className="flex w-full items-center justify-center rounded-full border border-orange-400/40 bg-orange-500/15 px-5 py-3 text-center text-sm font-black uppercase tracking-wide text-orange-200 hover:bg-orange-500/25"
+        >
+          Admin services
+        </Link>
+      ) : null}
 
       <button
         type="button"
