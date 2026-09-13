@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Maya storyteller portrait">
+  <defs>
+    <linearGradient id="maya-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1c1917"/>
+      <stop offset="100%" stop-color="#431407"/>
+    </linearGradient>
+    <linearGradient id="maya-shirt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fb923c"/>
+      <stop offset="100%" stop-color="#c2410c"/>
+    </linearGradient>
+    <radialGradient id="maya-glow" cx="50%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#f97316" stop-opacity="0.28"/>
+      <stop offset="70%" stop-color="#f97316" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="256" height="256" rx="128" fill="url(#maya-bg)"/>
+  <rect width="256" height="256" rx="128" fill="url(#maya-glow)"/>
+  <ellipse cx="128" cy="150" rx="70" ry="80" fill="#2a1208"/>
+  <ellipse cx="128" cy="246" rx="86" ry="52" fill="url(#maya-shirt)"/>
+  <path d="M70 246 C74 200 92 178 128 178 C164 178 182 200 186 246 Z" fill="url(#maya-shirt)"/>
+  <rect x="112" y="156" width="32" height="28" rx="12" fill="#c68642"/>
+  <ellipse cx="128" cy="172" rx="14" ry="8" fill="#a86b34" opacity="0.45"/>
+  <ellipse cx="128" cy="118" rx="52" ry="60" fill="#c68642"/>
+  
+  <path d="M76 118 C74 62 96 46 128 44 C160 46 182 62 180 118 C186 90 184 58 160 50 C140 44 116 44 96 52 C78 60 72 88 76 118 Z" fill="#2a1810"/>
+  <path d="M72 120 C68 150 70 188 78 210 C64 190 60 150 72 120 Z" fill="#2a1810"/>
+  <path d="M184 120 C188 150 186 188 178 210 C192 190 196 150 184 120 Z" fill="#2a1810"/>
+  <path d="M88 92 C100 78 118 74 128 74 C138 74 156 78 168 92 C160 70 140 62 128 62 C116 62 96 70 88 92 Z" fill="#1a0e08"/>
+
+  
+  <ellipse cx="108" cy="118" rx="6.5" ry="7.5" fill="#1f140e"/>
+  <ellipse cx="148" cy="118" rx="6.5" ry="7.5" fill="#1f140e"/>
+  <ellipse cx="106.5" cy="116" rx="2" ry="2.2" fill="#f5e6d3"/>
+  <ellipse cx="146.5" cy="116" rx="2" ry="2.2" fill="#f5e6d3"/>
+  <path d="M124 130 C126 136 130 136 132 130" fill="none" stroke="#8a5528" stroke-width="2" stroke-linecap="round"/>
+  <path d="M118 148 C124 154 132 154 138 148" fill="none" stroke="#7a3e2a" stroke-width="2.4" stroke-linecap="round"/>
+  <circle cx="86" cy="128" r="4.5" fill="#f59e0b"/>
+  <circle cx="170" cy="128" r="4.5" fill="#f59e0b"/>
+
+  
+</svg>

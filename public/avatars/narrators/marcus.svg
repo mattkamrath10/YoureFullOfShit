@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Marcus storyteller portrait">
+  <defs>
+    <linearGradient id="marcus-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#1e3a5f"/>
+    </linearGradient>
+    <linearGradient id="marcus-shirt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1e3a8a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <radialGradient id="marcus-glow" cx="50%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#f97316" stop-opacity="0.28"/>
+      <stop offset="70%" stop-color="#f97316" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="256" height="256" rx="128" fill="url(#marcus-bg)"/>
+  <rect width="256" height="256" rx="128" fill="url(#marcus-glow)"/>
+  
+  <ellipse cx="128" cy="246" rx="86" ry="52" fill="url(#marcus-shirt)"/>
+  <path d="M70 246 C74 200 92 178 128 178 C164 178 182 200 186 246 Z" fill="url(#marcus-shirt)"/>
+  <rect x="112" y="156" width="32" height="28" rx="12" fill="#8d5524"/>
+  <ellipse cx="128" cy="172" rx="14" ry="8" fill="#6f4018" opacity="0.5"/>
+  <ellipse cx="128" cy="118" rx="52" ry="60" fill="#8d5524"/>
+  
+  <path d="M82 108 C80 68 102 50 128 50 C154 50 176 68 174 108 C170 74 152 62 128 62 C104 62 86 74 82 108 Z" fill="#1c1917"/>
+  <path d="M80 104 C86 78 104 68 128 68 C152 68 170 78 176 104 C168 70 148 56 128 56 C108 56 88 70 80 104 Z" fill="#0c0a09"/>
+
+  
+  <ellipse cx="108" cy="116" rx="6.5" ry="7.2" fill="#1c1410"/>
+  <ellipse cx="148" cy="116" rx="6.5" ry="7.2" fill="#1c1410"/>
+  <ellipse cx="106.5" cy="114" rx="1.8" ry="2" fill="#fde68a"/>
+  <ellipse cx="146.5" cy="114" rx="1.8" ry="2" fill="#fde68a"/>
+  <path d="M124 130 C126 135 130 135 132 130" fill="none" stroke="#6f4018" stroke-width="2" stroke-linecap="round"/>
+  <path d="M96 148 C104 168 152 168 160 148 C150 160 106 160 96 148 Z" fill="#3f2a14"/>
+  <path d="M118 150 C126 154 130 154 138 150" fill="none" stroke="#5a3310" stroke-width="2.2" stroke-linecap="round"/>
+
+  
+</svg>

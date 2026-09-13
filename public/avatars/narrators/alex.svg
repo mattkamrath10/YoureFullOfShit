@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Alex storyteller portrait">
+  <defs>
+    <linearGradient id="alex-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#134e4a"/>
+    </linearGradient>
+    <linearGradient id="alex-shirt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f766e"/>
+      <stop offset="100%" stop-color="#115e59"/>
+    </linearGradient>
+    <radialGradient id="alex-glow" cx="50%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#f97316" stop-opacity="0.28"/>
+      <stop offset="70%" stop-color="#f97316" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="256" height="256" rx="128" fill="url(#alex-bg)"/>
+  <rect width="256" height="256" rx="128" fill="url(#alex-glow)"/>
+  
+  <ellipse cx="128" cy="246" rx="86" ry="52" fill="url(#alex-shirt)"/>
+  <path d="M70 246 C74 200 92 178 128 178 C164 178 182 200 186 246 Z" fill="url(#alex-shirt)"/>
+  <rect x="112" y="156" width="32" height="28" rx="12" fill="#e6c3a5"/>
+  <ellipse cx="128" cy="172" rx="14" ry="8" fill="#c9a07e" opacity="0.5"/>
+  <ellipse cx="128" cy="118" rx="52" ry="60" fill="#e6c3a5"/>
+  
+  <path d="M80 112 C78 64 100 48 128 48 C156 48 178 64 176 112 C174 78 156 66 128 64 C100 66 82 78 80 112 Z" fill="#4a3728"/>
+  <path d="M80 100 C86 78 104 68 128 68 C152 68 170 78 176 100 C168 72 148 60 128 60 C108 60 88 72 80 100 Z" fill="#3a2a1e"/>
+
+  
+  <ellipse cx="108" cy="116" rx="6.2" ry="7" fill="#2a2118"/>
+  <ellipse cx="148" cy="116" rx="6.2" ry="7" fill="#2a2118"/>
+  <rect x="96" y="112" width="64" height="3" rx="1.5" fill="#334155" opacity="0.85"/>
+  <path d="M96 114 C96 130 108 138 128 138 C148 138 160 130 160 114" fill="none" stroke="#1e293b" stroke-width="2.2"/>
+  <ellipse cx="106.5" cy="114.5" rx="1.8" ry="2" fill="#fff7ed"/>
+  <ellipse cx="146.5" cy="114.5" rx="1.8" ry="2" fill="#fff7ed"/>
+  <path d="M124 130 C126 134 130 134 132 130" fill="none" stroke="#c4a07c" stroke-width="2" stroke-linecap="round"/>
+  <path d="M118 146 C126 150 130 150 138 146" fill="none" stroke="#8b5a3c" stroke-width="2.2" stroke-linecap="round"/>
+
+  
+</svg>

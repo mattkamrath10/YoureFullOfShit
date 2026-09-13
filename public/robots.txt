@@ -1,0 +1,20 @@
+# YFOS robots — public crawl; keep admin/API out of indexes
+User-agent: *
+Allow: /
+Allow: /tell
+Allow: /sign-in
+Allow: /create-account
+
+Disallow: /admin
+Disallow: /admin/
+Disallow: /api
+Disallow: /api/
+Disallow: /account
+Disallow: /my-stories
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /avatars
+
+# After go-live, set NEXT_PUBLIC_SITE_URL and prefer app/sitemap.ts
+# (Next serves /sitemap.xml). Optionally add:
+# Sitemap: https://YOUR_DOMAIN/sitemap.xml

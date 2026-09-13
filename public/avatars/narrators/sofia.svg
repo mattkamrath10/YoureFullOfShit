@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Sofia storyteller portrait">
+  <defs>
+    <linearGradient id="sofia-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4c0519"/>
+      <stop offset="100%" stop-color="#7c2d12"/>
+    </linearGradient>
+    <linearGradient id="sofia-shirt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fb7185"/>
+      <stop offset="100%" stop-color="#be123c"/>
+    </linearGradient>
+    <radialGradient id="sofia-glow" cx="50%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#f97316" stop-opacity="0.28"/>
+      <stop offset="70%" stop-color="#f97316" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="256" height="256" rx="128" fill="url(#sofia-bg)"/>
+  <rect width="256" height="256" rx="128" fill="url(#sofia-glow)"/>
+  <ellipse cx="128" cy="160" rx="74" ry="78" fill="#3f1d12"/>
+  <ellipse cx="128" cy="246" rx="86" ry="52" fill="url(#sofia-shirt)"/>
+  <path d="M70 246 C74 200 92 178 128 178 C164 178 182 200 186 246 Z" fill="url(#sofia-shirt)"/>
+  <rect x="112" y="156" width="32" height="28" rx="12" fill="#d4a574"/>
+  <ellipse cx="128" cy="172" rx="14" ry="8" fill="#b88a54" opacity="0.45"/>
+  <ellipse cx="128" cy="118" rx="52" ry="60" fill="#d4a574"/>
+  
+  <path d="M70 130 C66 70 96 42 128 40 C160 42 190 70 186 130 C192 96 188 58 160 46 C140 38 116 38 96 46 C68 58 64 96 70 130 Z" fill="#3f1d12"/>
+  <path d="M68 140 C64 176 70 210 82 228 C58 200 54 160 68 140 Z" fill="#3f1d12"/>
+  <path d="M188 140 C192 176 186 210 174 228 C198 200 202 160 188 140 Z" fill="#3f1d12"/>
+  <path d="M88 86 C104 66 122 58 128 58 C134 58 152 66 168 86 C156 64 140 52 128 52 C116 52 100 64 88 86 Z" fill="#2a120c"/>
+
+  
+  <ellipse cx="108" cy="118" rx="6.3" ry="7.2" fill="#2a1810"/>
+  <ellipse cx="148" cy="118" rx="6.3" ry="7.2" fill="#2a1810"/>
+  <ellipse cx="106.6" cy="116" rx="1.8" ry="2" fill="#fff7ed"/>
+  <ellipse cx="146.6" cy="116" rx="1.8" ry="2" fill="#fff7ed"/>
+  <path d="M124 130 C126 136 130 136 132 130" fill="none" stroke="#b88a54" stroke-width="2" stroke-linecap="round"/>
+  <path d="M118 148 C126 156 134 156 140 148" fill="none" stroke="#9a3412" stroke-width="2.4" stroke-linecap="round"/>
+  <circle cx="88" cy="130" r="3.8" fill="#fda4af"/>
+  <circle cx="168" cy="130" r="3.8" fill="#fda4af"/>
+
+  
+</svg>

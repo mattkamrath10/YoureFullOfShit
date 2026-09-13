@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Jordan storyteller portrait">
+  <defs>
+    <linearGradient id="jordan-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1e1b4b"/>
+      <stop offset="100%" stop-color="#3b0764"/>
+    </linearGradient>
+    <linearGradient id="jordan-shirt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#5b21b6"/>
+    </linearGradient>
+    <radialGradient id="jordan-glow" cx="50%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#f97316" stop-opacity="0.28"/>
+      <stop offset="70%" stop-color="#f97316" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="256" height="256" rx="128" fill="url(#jordan-bg)"/>
+  <rect width="256" height="256" rx="128" fill="url(#jordan-glow)"/>
+  
+  <ellipse cx="128" cy="246" rx="86" ry="52" fill="url(#jordan-shirt)"/>
+  <path d="M70 246 C74 200 92 178 128 178 C164 178 182 200 186 246 Z" fill="url(#jordan-shirt)"/>
+  <rect x="112" y="156" width="32" height="28" rx="12" fill="#d1a072"/>
+  <ellipse cx="128" cy="172" rx="14" ry="8" fill="#b88654" opacity="0.45"/>
+  <ellipse cx="128" cy="118" rx="52" ry="60" fill="#d1a072"/>
+  
+  <circle cx="92" cy="86" r="16" fill="#1c1917"/>
+  <circle cx="108" cy="70" r="15" fill="#1c1917"/>
+  <circle cx="128" cy="64" r="16" fill="#1c1917"/>
+  <circle cx="148" cy="70" r="15" fill="#1c1917"/>
+  <circle cx="164" cy="86" r="16" fill="#1c1917"/>
+  <circle cx="100" cy="100" r="14" fill="#292524"/>
+  <circle cx="156" cy="100" r="14" fill="#292524"/>
+  <circle cx="128" cy="80" r="14" fill="#292524"/>
+  <path d="M86 110 C90 72 110 58 128 58 C146 58 166 72 170 110 C164 84 148 74 128 74 C108 74 92 84 86 110 Z" fill="#1c1917"/>
+
+  
+  <ellipse cx="108" cy="118" rx="6.4" ry="7.2" fill="#1c1410"/>
+  <ellipse cx="148" cy="118" rx="6.4" ry="7.2" fill="#1c1410"/>
+  <ellipse cx="106.6" cy="116" rx="1.8" ry="2" fill="#fde68a"/>
+  <ellipse cx="146.6" cy="116" rx="1.8" ry="2" fill="#fde68a"/>
+  <path d="M124 131 C126 136 130 136 132 131" fill="none" stroke="#a87a4a" stroke-width="2" stroke-linecap="round"/>
+  <path d="M120 148 C126 152 130 152 136 148" fill="none" stroke="#7c4a2a" stroke-width="2.2" stroke-linecap="round"/>
+
+  <path d="M88 210 C100 194 156 194 168 210 C160 188 148 180 128 180 C108 180 96 188 88 210 Z" fill="#6d28d9" opacity="0.35"/>
+</svg>

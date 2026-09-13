@@ -1,0 +1,20 @@
+[
+  {
+    "AllowedOrigins": [
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      "https://YOUR_DOMAIN",
+      "https://www.YOUR_DOMAIN"
+    ],
+    "AllowedMethods": ["GET", "PUT", "HEAD"],
+    "AllowedHeaders": [
+      "Content-Type",
+      "Content-Length",
+      "x-amz-content-sha256",
+      "x-amz-date",
+      "Authorization"
+    ],
+    "ExposeHeaders": ["ETag", "Location"],
+    "MaxAgeSeconds": 3600
+  }
+]
