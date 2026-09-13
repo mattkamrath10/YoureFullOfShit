@@ -60,8 +60,11 @@ function formatWhen(iso: string | null | undefined): string {
 
 export function ModerationDashboard({
   initialStories,
+  highlightStoryId = null,
 }: {
   initialStories: Story[];
+  /** From ?story= — deep link from admin notification email. */
+  highlightStoryId?: string | null;
 }) {
   const [section, setSection] = useState<SectionId>("stories");
   const [stories, setStories] = useState<Story[]>(initialStories);
@@ -74,6 +77,18 @@ export function ModerationDashboard({
   useEffect(() => {
     setStories(initialStories);
   }, [initialStories]);
+
+  useEffect(() => {
+    if (!highlightStoryId) return;
+    setSection("stories");
+    setTab("pending");
+    const t = window.setTimeout(() => {
+      document
+        .getElementById(`mod-story-${highlightStoryId}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 120);
+    return () => window.clearTimeout(t);
+  }, [highlightStoryId]);
 
   const counts = useMemo(
     () => ({
@@ -177,6 +192,27 @@ export function ModerationDashboard({
         <CommentsModerationPanel />
       ) : (
         <>
+          {counts.pending > 0 ? (
+            <div
+              className="rounded-3xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-center shadow-[0_0_28px_rgba(244,63,94,0.15)]"
+              role="status"
+            >
+              <p className="text-sm font-black uppercase tracking-wide text-rose-200 sm:text-base">
+                🔴 {counts.pending}{" "}
+                {counts.pending === 1
+                  ? "STORY WAITING FOR REVIEW"
+                  : "STORIES WAITING FOR REVIEW"}
+              </p>
+              <p className="mt-1 text-xs text-rose-200/70">
+                Approve to publish on Discover, or reject to keep it private.
+              </p>
+            </div>
+          ) : (
+            <p className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide text-emerald-200/80">
+              Queue clear — no stories waiting for review
+            </p>
+          )}
+
           <div className="grid grid-cols-3 gap-2 sm:gap-3">
             <CountTile label="Pending" value={counts.pending} accent="orange" />
             <CountTile
@@ -287,6 +323,7 @@ export function ModerationDashboard({
                   key={story.id}
                   story={story}
                   showModeratedMeta={tab !== "pending"}
+                  highlighted={highlightStoryId === story.id}
                   onStatusChange={onStatusChange}
                 />
               ))}
@@ -539,10 +576,12 @@ function FilterSelect({
 function ModerationCard({
   story,
   showModeratedMeta,
+  highlighted = false,
   onStatusChange,
 }: {
   story: Story;
   showModeratedMeta: boolean;
+  highlighted?: boolean;
   onStatusChange: (
     storyId: string,
     next: "published" | "rejected" | "pending",
@@ -557,7 +596,14 @@ function ModerationCard({
   const updated = formatWhen(story.updated_at);
 
   return (
-    <article className="relative rounded-3xl border border-white/10 bg-zinc-900/70 p-4">
+    <article
+      id={`mod-story-${story.id}`}
+      className={`relative rounded-3xl border p-4 ${
+        highlighted
+          ? "border-orange-400/60 bg-orange-500/10 shadow-[0_0_32px_rgba(249,115,22,0.2)]"
+          : "border-white/10 bg-zinc-900/70"
+      }`}
+    >
       <span
         className={`absolute right-3 top-3 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-wide ${STORY_TYPE_BADGE_CLASS[storyType]}`}
       >

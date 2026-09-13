@@ -4,7 +4,11 @@ import { getModerationQueue, requireAdmin } from "@/lib/stories-admin";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminStoriesPage() {
+export default async function AdminStoriesPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ story?: string | string[] }>;
+}) {
   const admin = await requireAdmin();
 
   if (!admin) {
@@ -31,6 +35,11 @@ export default async function AdminStoriesPage() {
   }
 
   const stories = await getModerationQueue();
+  const sp = searchParams ? await searchParams : undefined;
+  const raw = sp?.story;
+  const highlightStoryId = Array.isArray(raw)
+    ? raw[0]?.trim() || null
+    : raw?.trim() || null;
 
   return (
     <div className="space-y-6">
@@ -44,7 +53,10 @@ export default async function AdminStoriesPage() {
           for the author. Comments: restore or remove reported / pending items.
         </p>
       </section>
-      <ModerationDashboard initialStories={stories} />
+      <ModerationDashboard
+        initialStories={stories}
+        highlightStoryId={highlightStoryId}
+      />
     </div>
   );
 }

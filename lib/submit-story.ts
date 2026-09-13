@@ -33,6 +33,18 @@ function makePreview(body: string, title: string): string {
   return t.length <= 160 ? t : `${t.slice(0, 157).trim()}...`;
 }
 
+/** Fire-and-forget admin email. Never throws; never blocks submit success. */
+function notifyAdminsNewStory(storyId: string): void {
+  void fetch("/api/admin/notify-new-story", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ storyId }),
+    keepalive: true,
+  }).catch((err) => {
+    console.error("[submit] admin notify request failed", err);
+  });
+}
+
 export async function submitStory(input: SubmitStoryInput) {
   const title = input.title.trim();
   const body = input.body.trim();
@@ -101,6 +113,9 @@ export async function submitStory(input: SubmitStoryInput) {
       signal: input.signal,
     });
   }
+
+  // After successful pending create (+ media). Email failure must not affect this return.
+  notifyAdminsNewStory(storyId);
 
   return storyId;
 }
