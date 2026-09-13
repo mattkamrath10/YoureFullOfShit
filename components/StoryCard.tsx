@@ -8,10 +8,11 @@ import {
 
 export function StoryCard({
   story,
-  featured = false,
+  emphasized = false,
 }: {
   story: Story;
-  featured?: boolean;
+  /** Visual emphasis for the most-recent slot only — no "Featured" label. */
+  emphasized?: boolean;
 }) {
   const category = story.categories?.name ?? "Uncategorized";
   const teller = story.is_anonymous
@@ -27,28 +28,16 @@ export function StoryCard({
     <Link
       href={`/story/${story.id}`}
       className={`relative block rounded-3xl border transition ${
-        featured
+        emphasized
           ? "border-orange-400/40 bg-gradient-to-br from-orange-500/15 via-zinc-900/80 to-zinc-950 p-5 shadow-[0_0_40px_rgba(249,115,22,0.15)] sm:p-6"
           : "border-white/10 bg-zinc-900/60 p-4 hover:border-white/20 hover:bg-zinc-900 sm:p-5"
       }`}
     >
-      {/* Top-left: category (+ featured / demo). Top-right: story type. */}
-      <div className="mb-3 flex items-start justify-between gap-2">
-        <div className="flex min-w-0 flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wide">
-          {featured && (
-            <span className="rounded-full bg-orange-500 px-2.5 py-1 text-black">
-              Featured
-            </span>
-          )}
-          <span className="rounded-full bg-white/10 px-2.5 py-1 text-zinc-200">
-            {category}
-          </span>
-          {story.is_demo && (
-            <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-2.5 py-1 text-amber-200">
-              Demo · Fiction
-            </span>
-          )}
-        </div>
+      {/* Top-left: category. Top-right: story type. No Featured pill. */}
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <span className="max-w-[65%] truncate rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-zinc-200">
+          {category}
+        </span>
         <span
           className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-wide sm:text-[11px] ${STORY_TYPE_BADGE_CLASS[storyType]}`}
         >
@@ -58,7 +47,7 @@ export function StoryCard({
 
       <h2
         className={`text-center font-black tracking-tight text-white ${
-          featured ? "text-2xl sm:text-3xl" : "text-lg sm:text-xl"
+          emphasized ? "text-2xl sm:text-3xl" : "text-lg sm:text-xl"
         }`}
       >
         {story.title}

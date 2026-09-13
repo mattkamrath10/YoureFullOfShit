@@ -6,7 +6,8 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const stories = await getPublishedStories();
-  const [featured, ...rest] = stories;
+  // Same selection as before: newest published story first (not manually curated).
+  const [mostRecent, ...rest] = stories;
 
   return (
     <div className="space-y-8">
@@ -36,12 +37,12 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {featured ? (
+      {mostRecent ? (
         <section className="space-y-3">
           <h2 className="text-center text-sm font-bold uppercase tracking-wide text-zinc-500">
-            Featured story
+            Most recent story
           </h2>
-          <StoryCard story={featured} featured />
+          <StoryCard story={mostRecent} emphasized />
         </section>
       ) : (
         <p className="rounded-2xl border border-white/10 bg-zinc-900/50 p-6 text-center text-sm text-zinc-400">
