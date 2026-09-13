@@ -1,19 +1,32 @@
 import type { Metadata } from "next";
 import { SITE_DESCRIPTION, SITE_NAME, getSiteUrl } from "@/lib/site";
 
+/** Public path for the 1200x630 social share image (do not use signed/private URLs). */
+export const OG_SHARE_PATH = "/og-share.png";
+
+export function absoluteUrl(path: string): string {
+  const base = getSiteUrl().replace(/\/$/, "");
+  if (!path) return base;
+  return path.startsWith("http") ? path : `${base}${path.startsWith("/") ? "" : "/"}${path}`;
+}
+
+export function getOgImageUrl(): string {
+  return absoluteUrl(OG_SHARE_PATH);
+}
+
 /**
- * Optional root metadata with Open Graph.
- * Merge into existing app/layout.tsx — do NOT replace AuthProvider / AppShell.
- *
- * Example in layout.tsx:
- *   import { buildRootMetadata } from "@/lib/site-metadata";
- *   export const metadata: Metadata = buildRootMetadata();
+ * Root metadata with Open Graph + Twitter cards.
+ * Use in app/layout.tsx: export const metadata = buildRootMetadata();
  */
 export function buildRootMetadata(): Metadata {
   const url = getSiteUrl();
+  const image = getOgImageUrl();
 
   return {
-    title: SITE_NAME,
+    title: {
+      default: SITE_NAME,
+      template: `%s · ${SITE_NAME}`,
+    },
     description: SITE_DESCRIPTION,
     metadataBase: new URL(url),
     openGraph: {
@@ -22,15 +35,73 @@ export function buildRootMetadata(): Metadata {
       url,
       siteName: SITE_NAME,
       type: "website",
+      images: [
+        {
+          url: OG_SHARE_PATH,
+          width: 1200,
+          height: 630,
+          alt: SITE_NAME,
+        },
+      ],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title: SITE_NAME,
       description: SITE_DESCRIPTION,
+      images: [image],
     },
     icons: {
       icon: "/yfos-icon.png",
       apple: "/yfos-icon.png",
+    },
+  };
+}
+
+/**
+ * Public story share metadata. Only call for published/public stories.
+ * Always uses branded OG image (never private/signed media URLs).
+ */
+export function buildStoryMetadata(args: {
+  id: string;
+  title: string;
+  preview?: string | null;
+  body?: string | null;
+}): Metadata {
+  const title = (args.title || "Story").trim() || "Story";
+  const raw =
+    (args.preview ?? "").trim() ||
+    (args.body ?? "").replace(/\s+/g, " ").trim().slice(0, 180);
+  const description =
+    raw.length > 0
+      ? raw.slice(0, 180) + (raw.length > 180 ? "…" : "")
+      : SITE_DESCRIPTION;
+  const path = `/story/${args.id}`;
+  const url = absoluteUrl(path);
+  const image = getOgImageUrl();
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title: `${title} · ${SITE_NAME}`,
+      description,
+      url,
+      siteName: SITE_NAME,
+      type: "article",
+      images: [
+        {
+          url: OG_SHARE_PATH,
+          width: 1200,
+          height: 630,
+          alt: SITE_NAME,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${title} · ${SITE_NAME}`,
+      description,
+      images: [image],
     },
   };
 }

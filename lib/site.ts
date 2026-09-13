@@ -7,7 +7,7 @@
 export const SITE_NAME = "You're Full of Shit";
 
 export const SITE_DESCRIPTION =
-  "Everybody has a story. You decide what you believe. Community opinion — not factual verification.";
+  "Everybody has a story. Like, comment, and share. Entertainment — not factual verification.";
 
 /**
  * Canonical site origin with no trailing slash.

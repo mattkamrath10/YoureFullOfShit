@@ -7,6 +7,8 @@ export type MediaType = "video" | "audio" | "image" | "document";
 
 export type MediaStorageProvider = "supabase" | "r2";
 
+export type StoryCommentStatus = "visible" | "removed" | "pending";
+
 export type Category = {
   id: string;
   slug: string;
@@ -21,6 +23,7 @@ export type Profile = {
   display_name: string | null;
   avatar_url: string | null;
   is_admin?: boolean;
+  narrator_avatar_id?: string | null;
 };
 
 export type Story = {
@@ -40,6 +43,10 @@ export type Story = {
   categories?: Category | null;
   profiles?: Profile | null;
   story_media?: StoryMedia[];
+  /** Populated when select includes story_likes(count) */
+  like_count?: number;
+  /** Populated when select includes story_comments(count); RLS limits to visible */
+  comment_count?: number;
 };
 
 export type StoryMedia = {
@@ -61,6 +68,7 @@ export type StoryMedia = {
   created_at: string;
 };
 
+/** @deprecated Soft-retired from UI — table kept for compatibility */
 export type StoryVote = {
   id: string;
   story_id: string;
@@ -70,6 +78,7 @@ export type StoryVote = {
   updated_at: string;
 };
 
+/** @deprecated Soft-retired from UI */
 export type VoteTallies = {
   believe: number;
   maybe: number;
@@ -77,6 +86,43 @@ export type VoteTallies = {
   total: number;
 };
 
+export type StoryLike = {
+  id: string;
+  story_id: string;
+  user_id: string;
+  created_at: string;
+};
+
+export type StoryComment = {
+  id: string;
+  story_id: string;
+  user_id: string;
+  body: string;
+  status: StoryCommentStatus;
+  created_at: string;
+  updated_at: string;
+  profiles?: Pick<
+    Profile,
+    "id" | "display_name" | "avatar_url" | "username"
+  > | null;
+};
+
+export type StoryCommentReport = {
+  id: string;
+  comment_id: string;
+  reporter_id: string;
+  reason: string | null;
+  created_at: string;
+};
+
+export type UserFollow = {
+  id: string;
+  follower_id: string;
+  following_id: string;
+  created_at: string;
+};
+
+/** @deprecated Soft-retired from UI */
 export const VERDICT_LABELS: Record<Verdict, string> = {
   believe: "I Believe It",
   maybe: "Maybe",

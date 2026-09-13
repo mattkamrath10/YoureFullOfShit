@@ -28,21 +28,21 @@ export function AccountPanel() {
     return (
       <AuthCard
         eyebrow="Account"
-        title="You're signed out"
-        subtitle="Sign in to manage your account. Guests can still vote and post anonymously."
+        title="Create a FREE account to join the conversation."
+        subtitle="Manage your profile, avatar, and My Stories with a free account. Guests can still discover stories and submit text."
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Link
-            href="/sign-in"
+            href="/create-account"
             className="rounded-full bg-orange-500 px-5 py-2.5 text-center text-sm font-black uppercase tracking-wide text-black"
           >
-            Sign in
+            Create Free Account
           </Link>
           <Link
-            href="/create-account"
+            href="/sign-in"
             className="rounded-full border border-white/15 px-5 py-2.5 text-center text-sm font-semibold text-zinc-200"
           >
-            Create account
+            Sign In
           </Link>
         </div>
       </AuthCard>

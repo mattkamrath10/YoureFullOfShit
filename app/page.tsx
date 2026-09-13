@@ -16,14 +16,15 @@ export default async function HomePage() {
         </p>
         <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
           Unbelievable stories.
-          <span className="block text-orange-400">You decide.</span>
+          <span className="block text-orange-400">You&apos;re Full of Shit.</span>
         </h1>
         <p className="mx-auto max-w-xl text-sm leading-relaxed text-zinc-400 sm:text-base">
-          Read wild stories from the feed. Vote{" "}
-          <span className="text-emerald-300">I Believe It</span>,{" "}
-          <span className="text-amber-300">Maybe</span>, or{" "}
-          <span className="text-orange-300">You&apos;re Full of Shit</span>.
-          Votes are community opinion — not fact checks.
+          Read wild stories from the feed.{" "}
+          <span className="text-rose-300">Like</span>,{" "}
+          <span className="text-orange-300">comment</span>,{" "}
+          <span className="text-sky-300">share</span>, and{" "}
+          <span className="text-amber-300">follow</span> storytellers you want
+          more from. Entertainment — not fact checks.
         </p>
         <div className="pt-1">
           <Link

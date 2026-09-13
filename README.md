@@ -1,29 +1,33 @@
-# yfos-production
+# YFOS Access — free public app + account-required community
 
-Production launch prep for You're Full Of Shit (YFOS). Additive only — no R2/50MB redesign, no UI redesign, no deploy from this package.
+Guests can discover, read, listen, and submit **text** stories.
+Like / Comment / Share / Follow / Report / Account / My Stories need a **FREE** account.
 
-## Contents
+## Database (required)
 
-| Path | Purpose |
-|------|---------|
-| `docs/PRODUCTION_LAUNCH.md` | Full A–N launch checklist |
-| `docs/R2_CORS.example.json` | CORS with localhost + `YOUR_DOMAIN` placeholders |
-| `.env.example` | All env **names** (empty values / comments) |
-| `lib/site.ts` | `SITE_NAME`, `getSiteUrl()` |
-| `lib/site-metadata.ts` | Optional `buildRootMetadata()` for OG |
-| `app/sitemap.ts` | Public routes sitemap |
-| `public/robots.txt` | Allow public; disallow `/admin` `/api` |
+Run in Supabase SQL Editor **before** testing social writes:
 
-## Apply on the PC app root
+`supabase/migrations/20260914_social_grants_and_guest_access.sql`
 
-1. Copy `yfos-production.tar.gz` and `APPLY_YFOS_PRODUCTION.ps1` into the Next.js app root.
-2. Run: `.\APPLY_YFOS_PRODUCTION.ps1`
-3. Follow `docs/PRODUCTION_LAUNCH.md` (Vercel, env, Supabase redirects, R2 CORS, admin SQL, DNS).
-4. Optionally update `app/layout.tsx` metadata to `buildRootMetadata()` — keep AuthProvider/AppShell.
+This adds table GRANTs for `authenticated` (fixes 42501) and SELECT for `anon` on public social reads.
+Does **not** drop tables, disable RLS, or grant anon writes.
 
-## Hosting
+## Apply on PC
 
-**Vercel** is recommended for Next.js App Router + API routes + server env.
-Cloudflare Pages has limits with Next server features; see the launch doc.
+1. Copy `yfos-access.tar.gz` + `APPLY_YFOS_ACCESS.ps1` into the Next.js app root
+2. Paste/run the SQL migration in Supabase
+3. `.\APPLY_YFOS_ACCESS.ps1`
 
-This package does **not** make the app live.
+## What this package ships
+
+- Social grants migration
+- `SignInPrompt` FREE-account copy + Create Free Account / Sign In
+- `StoryActions` — Like/Comment/Share/Follow gated; Share does **not** run for guests
+- `CommentSection` — guests list comments; write/report → prompt; 42501 → prompt
+- `lib/social/{auth,errors,likes,comments,follows,share}.ts`
+- `AccountPanel` + `FreeAccountGate` + gated `/my-stories`
+- `TellStoryForm` — guests: text+STT OK; media upload blocked with clear message
+
+## Preserved
+
+Discover UI, StoryNarrator compact, R2, media pipeline for signed-in users, admin, auth, narrator `/avatars` local fallback.

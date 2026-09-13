@@ -20,6 +20,8 @@ export function StoryCard({
       (story.is_demo ? "Demo Storyteller" : "Anonymous");
   const storyType = getStoryType(story.story_media);
   const storyTypeLabel = getStoryTypeLabel(story.story_media);
+  const likes = story.like_count ?? 0;
+  const comments = story.comment_count ?? 0;
 
   return (
     <Link
@@ -67,7 +69,14 @@ export function StoryCard({
         <span className="hidden text-zinc-700 sm:inline" aria-hidden>
           ·
         </span>
-        <span className="font-semibold text-orange-300">Read &amp; verdict →</span>
+        <span className="tabular-nums text-zinc-400">
+          ❤️ {likes}{" "}
+          <span className="text-zinc-600">·</span> 💬 {comments}
+        </span>
+        <span className="hidden text-zinc-700 sm:inline" aria-hidden>
+          ·
+        </span>
+        <span className="font-semibold text-orange-300">Read story →</span>
       </div>
     </Link>
   );

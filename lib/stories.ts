@@ -5,30 +5,100 @@ import { isR2Configured } from "@/lib/r2/config";
 
 export type StoryMediaView = StoryMedia & { url: string | null };
 
+type CountEmbed = { count: number }[] | null | undefined;
+
+function embedCount(value: CountEmbed): number {
+  if (!value || !Array.isArray(value) || value.length === 0) return 0;
+  const n = value[0]?.count;
+  return typeof n === "number" ? n : 0;
+}
+
+function withSocialCounts(row: Record<string, unknown>): Story {
+  const like_count = embedCount(
+    (row.story_likes ?? row.likes) as CountEmbed,
+  );
+  const comment_count = embedCount(
+    (row.story_comments ?? row.comments) as CountEmbed,
+  );
+  const {
+    story_likes: _l,
+    story_comments: _c,
+    likes: _likes,
+    comments: _comments,
+    ...rest
+  } = row;
+  return {
+    ...(rest as Story),
+    like_count,
+    comment_count,
+  };
+}
+
+const PUBLISHED_SELECT_WITH_COUNTS =
+  "*, categories(*), profiles(*), story_media(id, media_type, mime_type), likes:story_likes(count), comments:story_comments(count)";
+const PUBLISHED_SELECT_BASIC =
+  "*, categories(*), profiles(*), story_media(id, media_type, mime_type)";
+const STORY_SELECT_WITH_COUNTS =
+  "*, categories(*), profiles(*), story_media(*), likes:story_likes(count), comments:story_comments(count)";
+const STORY_SELECT_BASIC =
+  "*, categories(*), profiles(*), story_media(*)";
+
 export async function getPublishedStories(): Promise<Story[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const withCounts = await supabase
     .from("stories")
-    .select(
-      "*, categories(*), profiles(*), story_media(id, media_type, mime_type)",
-    )
+    .select(PUBLISHED_SELECT_WITH_COUNTS)
     .eq("status", "published")
     .order("created_at", { ascending: false });
 
-  if (error) throw error;
-  return (data ?? []) as Story[];
+  if (!withCounts.error) {
+    return (withCounts.data ?? []).map((row) =>
+      withSocialCounts(row as Record<string, unknown>),
+    );
+  }
+
+  // Fallback before social migration is applied
+  const basic = await supabase
+    .from("stories")
+    .select(PUBLISHED_SELECT_BASIC)
+    .eq("status", "published")
+    .order("created_at", { ascending: false });
+
+  if (basic.error) throw withCounts.error;
+  return ((basic.data ?? []) as Story[]).map((s) => ({
+    ...s,
+    like_count: s.like_count ?? 0,
+    comment_count: s.comment_count ?? 0,
+  }));
 }
 
 export async function getStoryById(id: string): Promise<Story | null> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const withCounts = await supabase
     .from("stories")
-    .select("*, categories(*), profiles(*), story_media(*)")
+    .select(STORY_SELECT_WITH_COUNTS)
     .eq("id", id)
     .maybeSingle();
 
-  if (error) throw error;
-  return (data as Story | null) ?? null;
+  if (!withCounts.error) {
+    if (!withCounts.data) return null;
+    return withSocialCounts(withCounts.data as Record<string, unknown>);
+  }
+
+  const basic = await supabase
+    .from("stories")
+    .select(STORY_SELECT_BASIC)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (basic.error) throw withCounts.error;
+  if (!basic.data) return null;
+  const story = basic.data as Story;
+  return {
+    ...story,
+    like_count: story.like_count ?? 0,
+    comment_count: story.comment_count ?? 0,
+  };
 }
 
 function isR2Media(item: StoryMedia): boolean {
@@ -95,6 +165,7 @@ export async function getMyStories(): Promise<Story[]> {
   return (data ?? []) as Story[];
 }
 
+/** @deprecated Soft-retired from UI — story_votes table remains. */
 export async function getVoteTallies(storyId: string): Promise<VoteTallies> {
   const supabase = await createClient();
   const { data, error } = await supabase

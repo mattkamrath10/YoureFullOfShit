@@ -23,6 +23,7 @@ export function StoryNarrator({
   const eligible = storyAllowsNarrator({ body, media });
   const [narratorId, setNarratorId] = useState(() => getNarrator(null).id);
   const [speaking, setSpeaking] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const narrator = useMemo(() => getNarrator(narratorId), [narratorId]);
@@ -49,11 +50,13 @@ export function StoryNarrator({
       if (document.visibilityState === "hidden") {
         stopStorySpeech();
         setSpeaking(false);
+        setLoading(false);
       }
     };
     const onPageHide = () => {
       stopStorySpeech();
       setSpeaking(false);
+      setLoading(false);
     };
     document.addEventListener("visibilitychange", onHide);
     window.addEventListener("pagehide", onPageHide);
@@ -71,16 +74,24 @@ export function StoryNarrator({
       setError("There’s no text to read.");
       return;
     }
+    setLoading(true);
     await speakStorySmart({
       text,
       narratorId: narrator.id,
       voiceHint: narrator.voiceHint,
       rate: narrator.rate,
       pitch: narrator.pitch,
-      onStart: () => setSpeaking(true),
-      onEnd: () => setSpeaking(false),
+      onStart: () => {
+        setLoading(false);
+        setSpeaking(true);
+      },
+      onEnd: () => {
+        setLoading(false);
+        setSpeaking(false);
+      },
       onError: (message) => {
         setError(message);
+        setLoading(false);
         setSpeaking(false);
       },
     });
@@ -89,89 +100,88 @@ export function StoryNarrator({
   function onStop() {
     stopStorySpeech();
     setSpeaking(false);
+    setLoading(false);
   }
 
   return (
-    <section
-      className="rounded-3xl border border-orange-400/25 bg-zinc-900/70 p-5 sm:p-6"
-      aria-label="Storyteller"
-    >
-      <h2 className="text-center text-xs font-bold uppercase tracking-[0.2em] text-orange-300">
-        Storyteller
-      </h2>
-
-      <div className="mt-4 flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:justify-center sm:gap-6">
+    <div className="mt-4 flex flex-col items-center gap-1.5" aria-label="Storyteller">
+      <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-3 rounded-full border border-orange-400/30 bg-black/35 px-3 py-2 sm:gap-4 sm:px-4">
         <div
-          className={`relative h-24 w-24 shrink-0 overflow-hidden rounded-full border-2 ${
+          className={`relative h-10 w-10 shrink-0 overflow-hidden rounded-full border ${
             speaking
-              ? "border-orange-400 shadow-[0_0_28px_rgba(249,115,22,0.55)]"
-              : "border-white/15"
+              ? "border-orange-400 shadow-[0_0_16px_rgba(249,115,22,0.45)]"
+              : "border-white/20"
           }`}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={narrator.src}
-            alt={`${narrator.name} storyteller portrait`}
+            alt=""
             className={`h-full w-full object-cover ${speaking ? "animate-pulse" : ""}`}
           />
-          {speaking ? (
-            <span
-              className="pointer-events-none absolute inset-0 rounded-full ring-4 ring-orange-400/40"
-              aria-hidden
-            />
-          ) : null}
         </div>
 
-        <div className="min-w-0 text-center sm:text-left">
-          <p className="text-lg font-black tracking-tight text-white">
+        <div className="min-w-0 text-left">
+          <p className="truncate text-sm font-bold leading-tight text-white">
             {narrator.name}
           </p>
-          <p className="text-sm text-zinc-400">{narrator.blurb}</p>
-          <p className="mt-2">
-            <Link
-              href="/avatars"
-              className="text-xs font-bold uppercase tracking-wide text-orange-300 hover:text-orange-200"
-            >
-              Change avatar
-            </Link>
+          <p className="text-[11px] leading-tight text-zinc-400">
+            {speaking
+              ? "Reading…"
+              : loading
+                ? "Starting…"
+                : "Read by storyteller"}
           </p>
         </div>
-      </div>
 
-      <div className="mt-5 flex flex-col items-center gap-2">
         {speaking ? (
           <button
             type="button"
             onClick={onStop}
             aria-label="Stop reading"
-            className="w-full max-w-md rounded-2xl border border-rose-300/50 bg-rose-500 py-3.5 text-sm font-black uppercase tracking-wide text-white"
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-rose-500 px-3 text-xs font-black uppercase tracking-wide text-white hover:bg-rose-400"
           >
-            Stop reading
+            <span aria-hidden className="text-sm leading-none">
+              ■
+            </span>
+            Stop
           </button>
         ) : (
           <button
             type="button"
             onClick={() => void onRead()}
-            aria-label="Have avatar read the story"
-            className="w-full max-w-md rounded-2xl bg-orange-500 py-3.5 text-sm font-black uppercase tracking-wide text-black hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-40"
+            disabled={loading}
+            aria-label="Have storyteller read the story"
+            aria-busy={loading}
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-orange-500 px-3 text-xs font-black uppercase tracking-wide text-black hover:bg-orange-400 disabled:cursor-wait disabled:opacity-60"
           >
-            Have avatar read the story
+            <span aria-hidden className="text-sm leading-none">
+              ▶
+            </span>
+            {loading ? "…" : "Listen"}
           </button>
         )}
+
+        <Link
+          href="/avatars"
+          className="shrink-0 text-xs font-bold uppercase tracking-wide text-orange-300 hover:text-orange-200"
+          aria-label="Change storyteller avatar"
+        >
+          Change
+        </Link>
+      </div>
+
+      {error || speaking ? (
         <p
           role="status"
           aria-live="polite"
-          className={`text-center text-xs ${
-            error ? "text-amber-200" : speaking ? "font-semibold text-orange-200" : "text-zinc-500"
+          className={`max-w-md px-2 text-center text-[11px] ${
+            error ? "text-amber-200" : "font-semibold text-orange-200"
           }`}
         >
-          {error
-            ? error
-            : speaking
-              ? `${narrator.name} is reading…`
-              : "Uses a natural voice when configured. Falls back to your device voice otherwise."}
+          {error ? error : `${narrator.name} is reading…`}
         </p>
-      </div>
-    </section>
+      ) : null}
+    </div>
   );
 }

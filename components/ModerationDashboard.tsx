@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { ModerationActions } from "@/components/ModerationActions";
 import {
   getStoryType,
@@ -9,8 +9,14 @@ import {
   STORY_TYPE_BADGE_CLASS,
   type StoryType,
 } from "@/lib/story-type";
+import {
+  listModerationComments,
+  setCommentStatus,
+  type AdminComment,
+} from "@/lib/social/comments-admin";
 import { STATUS_LABELS, type Story, type StoryStatus } from "@/types/database";
 
+type SectionId = "stories" | "comments";
 type TabId = "pending" | "approved" | "rejected" | "all";
 
 const TABS: { id: TabId; label: string }[] = [
@@ -57,6 +63,7 @@ export function ModerationDashboard({
 }: {
   initialStories: Story[];
 }) {
+  const [section, setSection] = useState<SectionId>("stories");
   const [stories, setStories] = useState<Story[]>(initialStories);
   const [tab, setTab] = useState<TabId>("pending");
   const [query, setQuery] = useState("");
@@ -141,111 +148,328 @@ export function ModerationDashboard({
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        <CountTile label="Pending" value={counts.pending} accent="orange" />
-        <CountTile label="Approved" value={counts.approved} accent="emerald" />
-        <CountTile label="Rejected" value={counts.rejected} accent="rose" />
+      <div className="flex flex-wrap justify-center gap-2">
+        <button
+          type="button"
+          onClick={() => setSection("stories")}
+          className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-wide transition ${
+            section === "stories"
+              ? "bg-orange-500 text-black"
+              : "border border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
+          }`}
+        >
+          Stories
+        </button>
+        <button
+          type="button"
+          onClick={() => setSection("comments")}
+          className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-wide transition ${
+            section === "comments"
+              ? "bg-orange-500 text-black"
+              : "border border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
+          }`}
+        >
+          Comments
+        </button>
       </div>
+
+      {section === "comments" ? (
+        <CommentsModerationPanel />
+      ) : (
+        <>
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            <CountTile label="Pending" value={counts.pending} accent="orange" />
+            <CountTile
+              label="Approved"
+              value={counts.approved}
+              accent="emerald"
+            />
+            <CountTile
+              label="Rejected"
+              value={counts.rejected}
+              accent="rose"
+            />
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-2">
+            {TABS.map((t) => {
+              const active = tab === t.id;
+              const n =
+                t.id === "pending"
+                  ? counts.pending
+                  : t.id === "approved"
+                    ? counts.approved
+                    : t.id === "rejected"
+                      ? counts.rejected
+                      : counts.all;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setTab(t.id)}
+                  className={`rounded-full px-3 py-1.5 text-[11px] font-black uppercase tracking-wide transition sm:px-4 sm:text-xs ${
+                    active
+                      ? "bg-orange-500 text-black shadow-[0_0_20px_rgba(249,115,22,0.35)]"
+                      : "border border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
+                  }`}
+                >
+                  {t.label}
+                  <span
+                    className={
+                      active ? "ml-1.5 opacity-80" : "ml-1.5 text-zinc-500"
+                    }
+                  >
+                    {n}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="space-y-3 rounded-3xl border border-white/10 bg-zinc-900/50 p-4">
+            <label className="block">
+              <span className="mb-1.5 block text-center text-[11px] font-bold uppercase tracking-wide text-zinc-500">
+                Search
+              </span>
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Title, author, or category"
+                className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-2.5 text-center text-sm text-zinc-100 placeholder:text-zinc-600"
+              />
+            </label>
+            <div className="grid gap-2 sm:grid-cols-3">
+              <FilterSelect
+                label="Status"
+                value={statusFilter}
+                onChange={(v) => setStatusFilter(v as "all" | StoryStatus)}
+                options={[
+                  { value: "all", label: "All statuses" },
+                  { value: "pending", label: "Pending" },
+                  { value: "published", label: "Approved" },
+                  { value: "rejected", label: "Rejected" },
+                ]}
+              />
+              <FilterSelect
+                label="Story type"
+                value={typeFilter}
+                onChange={(v) => setTypeFilter(v as "all" | StoryType)}
+                options={[
+                  { value: "all", label: "All types" },
+                  { value: "video", label: "Video story" },
+                  { value: "audio", label: "Audio story" },
+                  { value: "text", label: "Text story" },
+                ]}
+              />
+              <FilterSelect
+                label="Category"
+                value={categoryFilter}
+                onChange={setCategoryFilter}
+                options={[
+                  { value: "all", label: "All categories" },
+                  ...categories.map((c) => ({ value: c, label: c })),
+                ]}
+              />
+            </div>
+          </div>
+
+          {filtered.length === 0 ? (
+            <p className="rounded-3xl border border-white/10 bg-zinc-900/60 p-6 text-center text-sm text-zinc-400">
+              {tab === "pending"
+                ? "Queue is clear — no stories waiting for review."
+                : "No stories match these filters."}
+            </p>
+          ) : (
+            <div className="grid gap-3">
+              {filtered.map((story) => (
+                <ModerationCard
+                  key={story.id}
+                  story={story}
+                  showModeratedMeta={tab !== "pending"}
+                  onStatusChange={onStatusChange}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function CommentsModerationPanel() {
+  const [rows, setRows] = useState<AdminComment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+  const [filter, setFilter] = useState<"all" | "reported" | "removed" | "pending">(
+    "all",
+  );
+
+  async function reload() {
+    setError(null);
+    const data = await listModerationComments();
+    setRows(data);
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    listModerationComments()
+      .then((data) => {
+        if (!cancelled) setRows(data);
+      })
+      .catch((e) => {
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : "Failed to load comments.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const visible = useMemo(() => {
+    return rows.filter((c) => {
+      const reportCount = c.story_comment_reports?.length ?? 0;
+      if (filter === "reported") return reportCount > 0;
+      if (filter === "removed") return c.status === "removed";
+      if (filter === "pending") return c.status === "pending";
+      return true;
+    });
+  }, [rows, filter]);
+
+  function onSetStatus(id: string, status: "visible" | "removed" | "pending") {
+    startTransition(async () => {
+      try {
+        await setCommentStatus(id, status);
+        setRows((prev) =>
+          prev.map((c) => (c.id === id ? { ...c, status } : c)),
+        );
+        await reload();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Update failed.");
+      }
+    });
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="text-center text-sm text-zinc-400">
+        Review reported, pending, or removed comments. Story approve/reject is
+        unchanged on the Stories tab.
+      </p>
 
       <div className="flex flex-wrap justify-center gap-2">
-        {TABS.map((t) => {
-          const active = tab === t.id;
-          const n =
-            t.id === "pending"
-              ? counts.pending
-              : t.id === "approved"
-                ? counts.approved
-                : t.id === "rejected"
-                  ? counts.rejected
-                  : counts.all;
-          return (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setTab(t.id)}
-              className={`rounded-full px-3 py-1.5 text-[11px] font-black uppercase tracking-wide transition sm:px-4 sm:text-xs ${
-                active
-                  ? "bg-orange-500 text-black shadow-[0_0_20px_rgba(249,115,22,0.35)]"
-                  : "border border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
-              }`}
-            >
-              {t.label}
-              <span
-                className={
-                  active ? "ml-1.5 opacity-80" : "ml-1.5 text-zinc-500"
-                }
-              >
-                {n}
-              </span>
-            </button>
-          );
-        })}
+        {(
+          [
+            ["all", "All"],
+            ["reported", "Reported"],
+            ["pending", "Pending"],
+            ["removed", "Removed"],
+          ] as const
+        ).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setFilter(id)}
+            className={`rounded-full px-3 py-1.5 text-[11px] font-black uppercase tracking-wide ${
+              filter === id
+                ? "bg-orange-500 text-black"
+                : "border border-white/10 bg-white/5 text-zinc-300"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
-      <div className="space-y-3 rounded-3xl border border-white/10 bg-zinc-900/50 p-4">
-        <label className="block">
-          <span className="mb-1.5 block text-center text-[11px] font-bold uppercase tracking-wide text-zinc-500">
-            Search
-          </span>
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Title, author, or category"
-            className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-2.5 text-center text-sm text-zinc-100 placeholder:text-zinc-600"
-          />
-        </label>
-        <div className="grid gap-2 sm:grid-cols-3">
-          <FilterSelect
-            label="Status"
-            value={statusFilter}
-            onChange={(v) => setStatusFilter(v as "all" | StoryStatus)}
-            options={[
-              { value: "all", label: "All statuses" },
-              { value: "pending", label: "Pending" },
-              { value: "published", label: "Approved" },
-              { value: "rejected", label: "Rejected" },
-            ]}
-          />
-          <FilterSelect
-            label="Story type"
-            value={typeFilter}
-            onChange={(v) => setTypeFilter(v as "all" | StoryType)}
-            options={[
-              { value: "all", label: "All types" },
-              { value: "video", label: "Video story" },
-              { value: "audio", label: "Audio story" },
-              { value: "text", label: "Text story" },
-            ]}
-          />
-          <FilterSelect
-            label="Category"
-            value={categoryFilter}
-            onChange={setCategoryFilter}
-            options={[
-              { value: "all", label: "All categories" },
-              ...categories.map((c) => ({ value: c, label: c })),
-            ]}
-          />
-        </div>
-      </div>
+      {error && (
+        <p className="text-center text-sm text-red-300" role="alert">
+          {error}
+        </p>
+      )}
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <p className="text-center text-sm text-zinc-500">Loading comments…</p>
+      ) : visible.length === 0 ? (
         <p className="rounded-3xl border border-white/10 bg-zinc-900/60 p-6 text-center text-sm text-zinc-400">
-          {tab === "pending"
-            ? "Queue is clear — no stories waiting for review."
-            : "No stories match these filters."}
+          No comments in this queue.
         </p>
       ) : (
         <div className="grid gap-3">
-          {filtered.map((story) => (
-            <ModerationCard
-              key={story.id}
-              story={story}
-              showModeratedMeta={tab !== "pending"}
-              onStatusChange={onStatusChange}
-            />
-          ))}
+          {visible.map((c) => {
+            const name =
+              c.profiles?.display_name?.trim() ||
+              c.profiles?.username?.trim() ||
+              "Member";
+            const reports = c.story_comment_reports?.length ?? 0;
+            const storyTitle =
+              (c as AdminComment & { stories?: { title?: string } }).stories
+                ?.title ?? "Story";
+            return (
+              <article
+                key={c.id}
+                className="rounded-3xl border border-white/10 bg-zinc-900/70 p-4"
+              >
+                <div className="mb-2 flex flex-wrap justify-center gap-2 text-[11px] font-semibold uppercase tracking-wide">
+                  <span className="rounded-full border border-orange-400/30 bg-orange-500/10 px-2.5 py-1 text-orange-200">
+                    {c.status}
+                  </span>
+                  {reports > 0 && (
+                    <span className="rounded-full border border-amber-400/30 bg-amber-500/10 px-2.5 py-1 text-amber-200">
+                      {reports} report{reports === 1 ? "" : "s"}
+                    </span>
+                  )}
+                </div>
+                <p className="text-center text-xs text-zinc-500">
+                  {name} · {formatWhen(c.created_at)}
+                </p>
+                <p className="mt-2 whitespace-pre-wrap text-center text-sm text-zinc-200">
+                  {c.body}
+                </p>
+                <div className="mt-3 flex flex-wrap justify-center gap-2">
+                  <Link
+                    href={`/story/${c.story_id}`}
+                    className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-bold uppercase text-zinc-100"
+                  >
+                    Open story · {storyTitle.slice(0, 40)}
+                    {storyTitle.length > 40 ? "…" : ""}
+                  </Link>
+                </div>
+                <div className="mt-3 flex flex-wrap justify-center gap-2">
+                  <button
+                    type="button"
+                    disabled={pending || c.status === "visible"}
+                    onClick={() => onSetStatus(c.id, "visible")}
+                    className="rounded-full bg-emerald-500/90 px-4 py-2 text-xs font-black uppercase text-black disabled:opacity-50"
+                  >
+                    Restore
+                  </button>
+                  <button
+                    type="button"
+                    disabled={pending || c.status === "removed"}
+                    onClick={() => onSetStatus(c.id, "removed")}
+                    className="rounded-full bg-rose-500/90 px-4 py-2 text-xs font-black uppercase text-black disabled:opacity-50"
+                  >
+                    Remove
+                  </button>
+                  <button
+                    type="button"
+                    disabled={pending || c.status === "pending"}
+                    onClick={() => onSetStatus(c.id, "pending")}
+                    className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-bold uppercase text-zinc-100 disabled:opacity-50"
+                  >
+                    Mark pending
+                  </button>
+                </div>
+              </article>
+            );
+          })}
         </div>
       )}
     </div>

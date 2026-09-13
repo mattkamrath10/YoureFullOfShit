@@ -38,10 +38,10 @@ export default async function AdminStoriesPage() {
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-300">
           Moderation
         </p>
-        <h1 className="text-3xl font-black text-white">Story review</h1>
+        <h1 className="text-3xl font-black text-white">Review center</h1>
         <p className="mx-auto max-w-xl text-sm text-zinc-400">
-          Approve to publish on Discover. Reject keeps the story private for the
-          author — rejected stories are not deleted.
+          Stories: approve to publish on Discover; reject keeps the story private
+          for the author. Comments: restore or remove reported / pending items.
         </p>
       </section>
       <ModerationDashboard initialStories={stories} />

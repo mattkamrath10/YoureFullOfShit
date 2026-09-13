@@ -2,6 +2,8 @@
 
 import { useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { SignInPrompt } from "@/components/social/SignInPrompt";
 import { submitStory } from "@/lib/submit-story";
 import {
   formatBytes,
@@ -21,6 +23,8 @@ const TITLE_MAX = 120;
 const BODY_MAX = 20000;
 
 export function TellStoryForm({ categories }: { categories: Category[] }) {
+  const { isSignedIn, loading: authLoading } = useAuth();
+  const [promptOpen, setPromptOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [body, setBody] = useState("");
@@ -37,6 +41,19 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
   const [submittedId, setSubmittedId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const uploadAbortRef = useRef<AbortController | null>(null);
+
+  const canUploadMedia = Boolean(isSignedIn) && !authLoading;
+
+  function requireMediaAccount(): boolean {
+    if (authLoading) return false;
+    if (!isSignedIn) {
+      setMediaError("Sign in to upload video/audio");
+      setPromptOpen(true);
+      return false;
+    }
+    return true;
+  }
+
 
   const bodyCount = body.trim().length;
   const titleCount = title.trim().length;
@@ -74,6 +91,7 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
   }, [pending, submitHints]);
 
   async function prepareAndAddVideo(file: File) {
+    if (!requireMediaAccount()) return;
     const mediaType = detectMediaType(file);
     if (mediaType !== "video") {
       const result = validateMediaFile(file);
@@ -129,6 +147,7 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
 
   function addFiles(fileList: FileList | null) {
     if (!fileList?.length) return;
+    if (!requireMediaAccount()) return;
     setMediaError(null);
     void (async () => {
       for (const file of Array.from(fileList)) {
@@ -147,6 +166,12 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
     setUploadLabel(null);
     setUploadRatio(null);
     setMediaError(null);
+    if (!isSignedIn && allMedia.length > 0) {
+      setMediaError("Sign in to upload video/audio");
+      setPromptOpen(true);
+      setError("Sign in to upload video/audio");
+      return;
+    }
     for (const item of allMedia) {
       const check = validateMediaFile(item.file);
       if (!check.ok) {
@@ -369,13 +394,24 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
                   </button>
                 </div>
               </div>
-            ) : (
+            ) : canUploadMedia ? (
               <button
                 type="button"
                 onClick={() => setRecorderOpen(true)}
                 className="w-full rounded-2xl bg-orange-500 py-3.5 text-sm font-black uppercase tracking-wide text-black"
               >
                 Record Video Story
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setMediaError("Sign in to upload video/audio");
+                  setPromptOpen(true);
+                }}
+                className="w-full rounded-2xl border border-white/15 bg-white/5 py-3.5 text-sm font-black uppercase tracking-wide text-zinc-200"
+              >
+                Sign in to upload video/audio
               </button>
             )}
           </section>
@@ -391,10 +427,15 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
               <p className="mt-1 text-xs text-zinc-500">
                 Images ≤ 10 MB · Videos ≤ 50 MB via Supabase · Larger videos (up to 1 GB) upload via R2 · PDFs ≤ 20 MB
               </p>
+              {!canUploadMedia && (
+                <p className="mt-2 rounded-2xl border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
+                  Sign in to upload video/audio. Guests can still submit text (and speech-to-text).
+                </p>
+              )}
             </div>
 
             <div className="grid gap-2 sm:grid-cols-3">
-              <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-white/10 bg-black/30 px-3 py-4 text-center hover:bg-black/50">
+              <label onClick={(e) => { if (!canUploadMedia) { e.preventDefault(); requireMediaAccount(); } }} className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-white/10 bg-black/30 px-3 py-4 text-center hover:bg-black/50">
                 <span className="text-sm font-bold text-white">Take Photo</span>
                 <span className="mt-1 text-[11px] text-zinc-500">Camera still</span>
                 <input
@@ -408,7 +449,7 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
                   }}
                 />
               </label>
-              <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-white/10 bg-black/30 px-3 py-4 text-center hover:bg-black/50">
+              <label onClick={(e) => { if (!canUploadMedia) { e.preventDefault(); requireMediaAccount(); } }} className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-white/10 bg-black/30 px-3 py-4 text-center hover:bg-black/50">
                 <span className="text-sm font-bold text-white">Choose Photos</span>
                 <span className="mt-1 text-[11px] text-zinc-500">From gallery</span>
                 <input
@@ -422,7 +463,7 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
                   }}
                 />
               </label>
-              <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-white/10 bg-black/30 px-3 py-4 text-center hover:bg-black/50">
+              <label onClick={(e) => { if (!canUploadMedia) { e.preventDefault(); requireMediaAccount(); } }} className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-white/10 bg-black/30 px-3 py-4 text-center hover:bg-black/50">
                 <span className="text-sm font-bold text-white">Upload Video</span>
                 <span className="mt-1 text-[11px] text-zinc-500">Existing file</span>
                 <input
@@ -436,7 +477,7 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
                 />
               </label>
             </div>
-            <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-white/10 bg-black/30 px-4 py-4 text-center hover:bg-black/50">
+            <label onClick={(e) => { if (!canUploadMedia) { e.preventDefault(); requireMediaAccount(); } }} className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-white/10 bg-black/30 px-4 py-4 text-center hover:bg-black/50">
               <span className="text-sm font-bold text-white">Upload documents / mixed files</span>
               <span className="mt-1 text-xs text-zinc-500">
                 JPG, PNG, WEBP, MP4, MOV, WEBM, PDF
@@ -548,6 +589,7 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
         onAccept={(video) => {
           setRecorderOpen(false);
           void (async () => {
+            if (!requireMediaAccount()) return;
             const check = validateMediaFile(video.file);
             if (!check.ok) {
               setMediaError(check.error);
@@ -563,6 +605,12 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
             setRecorded(video);
           })();
         }}
+      />
+
+      <SignInPrompt
+        open={promptOpen}
+        onClose={() => setPromptOpen(false)}
+        action="upload media"
       />
     </>
   );

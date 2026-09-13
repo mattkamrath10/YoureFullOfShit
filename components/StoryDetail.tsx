@@ -1,18 +1,15 @@
-import type { Story, Verdict, VoteTallies } from "@/types/database";
+import type { Story } from "@/types/database";
 import type { StoryMediaView } from "@/lib/stories";
 import { groupMediaViews } from "@/lib/stories";
-import { VerdictPanel } from "@/components/VerdictPanel";
 import { StoryNarrator } from "@/components/StoryNarrator";
+import { StoryActions } from "@/components/social/StoryActions";
+import { CommentSection } from "@/components/social/CommentSection";
 
 export function StoryDetail({
   story,
-  tallies,
-  myVote,
   media,
 }: {
   story: Story;
-  tallies: VoteTallies;
-  myVote: Verdict | null;
   media: StoryMediaView[];
 }) {
   const category = story.categories?.name ?? "Uncategorized";
@@ -23,6 +20,7 @@ export function StoryDetail({
 
   const grouped = groupMediaViews(media);
   const hasMedia = media.length > 0;
+  const mediaForNarrator = media.length ? media : (story.story_media ?? []);
 
   return (
     <article className="space-y-6">
@@ -55,6 +53,13 @@ export function StoryDetail({
         <p className="mt-3 text-center text-sm text-zinc-400">
           Told by <span className="text-zinc-200">{teller}</span>
         </p>
+
+        <StoryNarrator
+          title={story.title}
+          body={story.body}
+          media={mediaForNarrator}
+        />
+
         <div className="prose-invert mt-6 space-y-4 text-left text-[15px] leading-7 text-zinc-200 sm:text-base">
           {story.body.split("\n").map((para, i) =>
             para.trim() ? (
@@ -65,12 +70,6 @@ export function StoryDetail({
           )}
         </div>
       </div>
-
-      <StoryNarrator
-        title={story.title}
-        body={story.body}
-        media={media.length ? media : (story.story_media ?? [])}
-      />
 
       {grouped.videos.length > 0 && (
         <section className="rounded-3xl border border-white/10 bg-zinc-950/60 p-4 sm:p-5">
@@ -159,20 +158,16 @@ export function StoryDetail({
         )}
       </section>
 
-      <VerdictPanel
+      <StoryActions
         storyId={story.id}
-        initialTallies={tallies}
-        initialMyVote={myVote}
+        storyTitle={story.title}
+        authorId={story.author_id}
+        isAnonymousAuthor={story.is_anonymous}
+        initialLikeCount={story.like_count ?? 0}
+        initialCommentCount={story.comment_count ?? 0}
       />
 
-      <section className="rounded-3xl border border-white/10 bg-zinc-900/40 p-5">
-        <h2 className="text-center text-sm font-bold uppercase tracking-wide text-zinc-400">
-          Reactions &amp; comments
-        </h2>
-        <p className="mt-2 text-center text-sm text-zinc-500">
-          Coming later. Verdicts ship first.
-        </p>
-      </section>
+      <CommentSection storyId={story.id} />
     </article>
   );
 }

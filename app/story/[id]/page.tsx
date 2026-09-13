@@ -1,11 +1,47 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StoryDetail } from "@/components/StoryDetail";
-import { createClient } from "@/lib/supabase/server";
-import { getSignedMedia, getStoryById, getVoteTallies } from "@/lib/stories";
-import type { Verdict } from "@/types/database";
+import { buildStoryMetadata } from "@/lib/site-metadata";
+import { getSignedMedia, getStoryById } from "@/lib/stories";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const story = await getStoryById(id);
+  if (!story) {
+    return { title: "Story not found" };
+  }
+
+  // Only expose public published stories in social previews.
+  const isPublic =
+    story.status === "published" ||
+    (story.is_published === true &&
+      story.status !== "rejected" &&
+      story.status !== "pending" &&
+      story.status !== "draft");
+
+  if (!isPublic) {
+    return {
+      title: "You're Full of Shit",
+      description:
+        "Everybody has a story. Like, comment, and share. Entertainment — not factual verification.",
+      robots: { index: false, follow: false },
+    };
+  }
+
+  return buildStoryMetadata({
+    id: story.id,
+    title: story.title,
+    preview: story.preview,
+    body: story.body,
+  });
+}
 
 export default async function StoryPage({
   params,
@@ -16,21 +52,7 @@ export default async function StoryPage({
   const story = await getStoryById(id);
   if (!story) notFound();
 
-  const tallies = await getVoteTallies(id);
   const media = await getSignedMedia(story.story_media);
-
-  const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
-  let myVote: Verdict | null = null;
-  if (auth.user) {
-    const { data } = await supabase
-      .from("story_votes")
-      .select("verdict")
-      .eq("story_id", id)
-      .eq("user_id", auth.user.id)
-      .maybeSingle();
-    myVote = (data?.verdict as Verdict | undefined) ?? null;
-  }
 
   return (
     <div className="space-y-4">
@@ -40,12 +62,7 @@ export default async function StoryPage({
       >
         Back to Discover
       </Link>
-      <StoryDetail
-        story={story}
-        tallies={tallies}
-        myVote={myVote}
-        media={media}
-      />
+      <StoryDetail story={story} media={media} />
     </div>
   );
 }
