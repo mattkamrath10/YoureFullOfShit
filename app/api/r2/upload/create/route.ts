@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 
 /**
  * POST /api/r2/upload/create
- * Phase 1 foundation — not called from /tell yet.
+ * Email (free account) only — guests/anonymous cannot start R2 uploads.
  *
  * Body: { storyId, fileName, mimeType, byteSize }
  */

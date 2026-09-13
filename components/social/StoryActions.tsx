@@ -11,6 +11,7 @@ import {
   needsAccountPrompt,
   toErrorMessage,
 } from "@/lib/social/errors";
+import { ReportStoryModal } from "@/components/social/ReportStoryModal";
 
 function formatCount(n: number): string {
   if (n < 1000) return String(n);
@@ -42,6 +43,7 @@ export function StoryActions({
   const [followerCount, setFollowerCount] = useState(0);
   const [promptOpen, setPromptOpen] = useState(false);
   const [promptAction, setPromptAction] = useState("join");
+  const [reportOpen, setReportOpen] = useState(false);
   const [shareNote, setShareNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -146,10 +148,7 @@ export function StoryActions({
     setShareNote(null);
     setError(null);
     if (authLoading) return;
-    if (!isSignedIn) {
-      needSignIn("share");
-      return;
-    }
+    // Guests may share (Web Share / clipboard) — do not open SignInPrompt.
     const url =
       typeof window !== "undefined"
         ? `${window.location.origin}/story/${storyId}`
@@ -160,16 +159,23 @@ export function StoryActions({
         if (result.method === "clipboard") {
           setShareNote("Link copied.");
         } else if (result.method === "none" && result.error !== "Share cancelled.") {
-          if (needsAccountPrompt(result.error)) {
-            needSignIn("share");
-          } else {
-            setError(result.error);
-          }
+          setError(result.error);
         }
       } catch (e) {
-        handleSocialError(e, "Could not share.");
+        setError(toErrorMessage(e, "Could not share."));
       }
     });
+  }
+
+
+  function onReport() {
+    setError(null);
+    if (authLoading) return;
+    if (!isSignedIn) {
+      needSignIn("report");
+      return;
+    }
+    setReportOpen(true);
   }
 
   function scrollToComments() {
@@ -251,6 +257,20 @@ export function StoryActions({
               </span>
             </button>
           )}
+
+          <button
+            type="button"
+            disabled={pending}
+            onClick={onReport}
+            className={`${btnBase} border-white/10 bg-white/5 text-zinc-200 hover:border-amber-400/30 hover:bg-amber-500/10`}
+          >
+            <span className="text-base leading-none" aria-hidden>
+              ⚑
+            </span>
+            <span className="text-[11px] font-black uppercase tracking-wide">
+              Report
+            </span>
+          </button>
         </div>
 
         {shareNote && (
@@ -267,6 +287,14 @@ export function StoryActions({
         open={promptOpen}
         onClose={() => setPromptOpen(false)}
         action={promptAction}
+      />
+
+      <ReportStoryModal
+        open={reportOpen}
+        onClose={() => setReportOpen(false)}
+        storyId={storyId}
+        storyTitle={storyTitle}
+        onNeedSignIn={() => needSignIn("report")}
       />
     </>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { isEmailAuthUser } from "@/lib/auth/session";
 import type { MediaType } from "@/types/database";
 import {
   uploadLargeVideoToR2,
@@ -17,14 +18,19 @@ const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const VIDEO_TYPES = new Set(["video/mp4", "video/webm", "video/quicktime"]);
 const DOC_TYPES = new Set(["application/pdf"]);
 
-/** Supabase Free object cap — videos larger than this go to R2. */
+/** Supabase Free object cap — videos larger than this go to R2 (email only). */
 export const SUPABASE_VIDEO_MAX = 50 * 1024 * 1024;
+/** Hard ceiling for guest / anonymous uploads (Supabase path only). */
+export const GUEST_UPLOAD_MAX = 50 * 1024 * 1024;
 /** App max for R2 videos (matches Phase 1 default 1 GiB). */
 export const R2_VIDEO_APP_MAX = 1024 * 1024 * 1024;
 
+export const GUEST_LARGE_VIDEO_MESSAGE =
+  "Guests can attach video up to 50 MB. Create a free account for larger videos (up to 1 GB).";
+
 export const LIMITS = {
   image: 10 * 1024 * 1024,
-  /** Selection/validation ceiling for videos (R2 path). */
+  /** Selection/validation ceiling for videos (R2 path for email accounts). */
   video: R2_VIDEO_APP_MAX,
   document: 20 * 1024 * 1024,
 } as const;
@@ -48,9 +54,16 @@ export function shouldUseR2ForVideo(file: File): boolean {
   return detectMediaType(file) === "video" && file.size > SUPABASE_VIDEO_MAX;
 }
 
+export type ValidateMediaOptions = {
+  /** True when the session is a real email free account (not guest/anonymous). */
+  emailAuth?: boolean;
+};
+
 export function validateMediaFile(
   file: File,
+  opts?: ValidateMediaOptions,
 ): { ok: true; mediaType: MediaType } | { ok: false; error: string } {
+  const emailAuth = Boolean(opts?.emailAuth);
   const mediaType = detectMediaType(file);
   if (!mediaType) {
     return {
@@ -58,14 +71,31 @@ export function validateMediaFile(
       error: `${file.name}: unsupported type. Use JPG/PNG/WEBP, MP4/MOV/WEBM, or PDF.`,
     };
   }
+
+  if (!emailAuth && file.size > GUEST_UPLOAD_MAX) {
+    if (mediaType === "video") {
+      return { ok: false, error: GUEST_LARGE_VIDEO_MESSAGE };
+    }
+    return {
+      ok: false,
+      error: `${file.name}: guests can upload files up to 50 MB. Create a free account for larger uploads.`,
+    };
+  }
+
   const limit =
     mediaType === "image"
       ? LIMITS.image
       : mediaType === "video"
-        ? LIMITS.video
+        ? emailAuth
+          ? LIMITS.video
+          : SUPABASE_VIDEO_MAX
         : LIMITS.document;
+
   if (file.size > limit) {
     if (mediaType === "video") {
+      if (!emailAuth) {
+        return { ok: false, error: GUEST_LARGE_VIDEO_MESSAGE };
+      }
       return {
         ok: false,
         error:
@@ -103,7 +133,8 @@ export type MediaUploadProgress = {
 
 /**
  * Upload story media: images/PDFs/small videos → Supabase Storage;
- * videos over 50 MB → Cloudflare R2 multipart (one object, no FFmpeg).
+ * videos over 50 MB → Cloudflare R2 multipart (email accounts only).
+ * Guests / anonymous: Supabase only; reject byte_size > 50 MB.
  */
 export async function uploadStoryMedia(args: {
   userId: string;
@@ -113,6 +144,8 @@ export async function uploadStoryMedia(args: {
   signal?: AbortSignal;
 }) {
   const supabase = createClient();
+  const { data: authData } = await supabase.auth.getUser();
+  const emailAuth = isEmailAuthUser(authData.user);
   const total = args.files.length;
   let done = 0;
 
@@ -121,18 +154,31 @@ export async function uploadStoryMedia(args: {
       throw new DOMException("Aborted", "AbortError");
     }
 
+    if (!emailAuth && item.file.size > GUEST_UPLOAD_MAX) {
+      throw new Error(
+        item.mediaType === "video" || detectMediaType(item.file) === "video"
+          ? GUEST_LARGE_VIDEO_MESSAGE
+          : `${item.file.name}: guests can upload files up to 50 MB.`,
+      );
+    }
+
+    const useR2 = emailAuth && shouldUseR2ForVideo(item.file);
+    if (!emailAuth && shouldUseR2ForVideo(item.file)) {
+      throw new Error(GUEST_LARGE_VIDEO_MESSAGE);
+    }
+
     args.onProgress?.({
-      kind: shouldUseR2ForVideo(item.file) ? "r2" : "file",
+      kind: useR2 ? "r2" : "file",
       done,
       total,
       currentName: item.file.name,
       ratio: 0,
-      message: shouldUseR2ForVideo(item.file)
+      message: useR2
         ? "Uploading large video to secure storage…"
         : `Uploading ${item.file.name}…`,
     });
 
-    if (shouldUseR2ForVideo(item.file)) {
+    if (useR2) {
       const r2 = await uploadLargeVideoToR2({
         storyId: args.storyId,
         file: item.file,

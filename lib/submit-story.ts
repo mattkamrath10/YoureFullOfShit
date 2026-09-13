@@ -2,8 +2,12 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { ensureUser } from "@/lib/votes";
+import { isEmailAuthUser } from "@/lib/auth/session";
 import {
+  GUEST_LARGE_VIDEO_MESSAGE,
+  GUEST_UPLOAD_MAX,
   uploadStoryMedia,
+  validateMediaFile,
   type MediaUploadProgress,
   type SelectedMedia,
 } from "@/lib/media";
@@ -43,7 +47,19 @@ export async function submitStory(input: SubmitStoryInput) {
   }
   if (body.length > 20000) throw new Error("Story must be 20,000 characters or fewer.");
 
+  // ensureUser may create/keep an anonymous session for guest ownership — that is OK.
   const user = await ensureUser();
+  const emailAuth = isEmailAuthUser(user);
+
+  for (const item of input.media) {
+    const check = validateMediaFile(item.file, { emailAuth });
+    if (!check.ok) throw new Error(check.error);
+    // Defense in depth: guests/anonymous never exceed 50 MB (no R2).
+    if (!emailAuth && item.file.size > GUEST_UPLOAD_MAX) {
+      throw new Error(GUEST_LARGE_VIDEO_MESSAGE);
+    }
+  }
+
   const supabase = createClient();
 
   if (!input.isAnonymous) {

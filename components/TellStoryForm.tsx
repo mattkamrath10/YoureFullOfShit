@@ -11,6 +11,8 @@ import {
   detectMediaType,
   shouldUseR2ForVideo,
   R2_VIDEO_APP_MAX,
+  SUPABASE_VIDEO_MAX,
+  GUEST_LARGE_VIDEO_MESSAGE,
   type SelectedMedia,
   type MediaUploadProgress,
 } from "@/lib/media";
@@ -42,18 +44,11 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
   const [pending, startTransition] = useTransition();
   const uploadAbortRef = useRef<AbortController | null>(null);
 
-  const canUploadMedia = Boolean(isSignedIn) && !authLoading;
-
-  function requireMediaAccount(): boolean {
-    if (authLoading) return false;
-    if (!isSignedIn) {
-      setMediaError("Sign in to upload video/audio");
-      setPromptOpen(true);
-      return false;
-    }
-    return true;
+  // isSignedIn === email free account (AuthProvider). Guests may still upload ≤50 MB via Supabase.
+  function promptForLargeGuestVideo(message: string = GUEST_LARGE_VIDEO_MESSAGE) {
+    setMediaError(message);
+    setPromptOpen(true);
   }
-
 
   const bodyCount = body.trim().length;
   const titleCount = title.trim().length;
@@ -91,12 +86,16 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
   }, [pending, submitHints]);
 
   async function prepareAndAddVideo(file: File) {
-    if (!requireMediaAccount()) return;
+    if (authLoading) return;
     const mediaType = detectMediaType(file);
     if (mediaType !== "video") {
-      const result = validateMediaFile(file);
+      const result = validateMediaFile(file, { emailAuth: isSignedIn });
       if (!result.ok) {
-        setMediaError(result.error);
+        if (!isSignedIn && file.size > SUPABASE_VIDEO_MAX) {
+          promptForLargeGuestVideo(result.error);
+        } else {
+          setMediaError(result.error);
+        }
         return;
       }
       setMedia((prev) => {
@@ -116,6 +115,11 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
       return;
     }
 
+    if (!isSignedIn && file.size > SUPABASE_VIDEO_MAX) {
+      promptForLargeGuestVideo();
+      return;
+    }
+
     if (file.size > R2_VIDEO_APP_MAX) {
       setMediaError(
         "This video is too large (over 1 GB). Please choose a shorter clip.",
@@ -123,9 +127,13 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
       return;
     }
 
-    const result = validateMediaFile(file);
+    const result = validateMediaFile(file, { emailAuth: isSignedIn });
     if (!result.ok) {
-      setMediaError(result.error);
+      if (!isSignedIn && file.size > SUPABASE_VIDEO_MAX) {
+        promptForLargeGuestVideo(result.error);
+      } else {
+        setMediaError(result.error);
+      }
       return;
     }
 
@@ -138,7 +146,7 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
       },
     ]);
 
-    if (shouldUseR2ForVideo(file)) {
+    if (isSignedIn && shouldUseR2ForVideo(file)) {
       setProcessLabel(
         `Large video selected (${formatBytes(file.size)}). It will upload securely on submit (no compression/split).`,
       );
@@ -147,7 +155,7 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
 
   function addFiles(fileList: FileList | null) {
     if (!fileList?.length) return;
-    if (!requireMediaAccount()) return;
+    if (authLoading) return;
     setMediaError(null);
     void (async () => {
       for (const file of Array.from(fileList)) {
@@ -166,17 +174,14 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
     setUploadLabel(null);
     setUploadRatio(null);
     setMediaError(null);
-    if (!isSignedIn && allMedia.length > 0) {
-      setMediaError("Sign in to upload video/audio");
-      setPromptOpen(true);
-      setError("Sign in to upload video/audio");
-      return;
-    }
     for (const item of allMedia) {
-      const check = validateMediaFile(item.file);
+      const check = validateMediaFile(item.file, { emailAuth: isSignedIn });
       if (!check.ok) {
         setMediaError(check.error);
         setError(check.error);
+        if (!isSignedIn && item.file.size > SUPABASE_VIDEO_MAX) {
+          setPromptOpen(true);
+        }
         return;
       }
     }
@@ -232,6 +237,33 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
           <span className="text-zinc-200">not</span> appear on Discover until
           published.
         </p>
+
+        {!isSignedIn && (
+          <div className="mx-auto max-w-md space-y-3 rounded-2xl border border-orange-400/30 bg-orange-500/10 p-4">
+            <p className="text-sm font-bold text-orange-100">
+              Create a FREE account to edit this story and track it in My Stories.
+            </p>
+            <p className="text-xs text-zinc-400">
+              Guests can submit text and video up to 50 MB. A free account unlocks
+              edit, My Stories, likes, comments, and larger videos.
+            </p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+              <Link
+                href="/create-account"
+                className="rounded-full bg-orange-500 px-5 py-2.5 text-sm font-black uppercase tracking-wide text-black"
+              >
+                Create Free Account
+              </Link>
+              <Link
+                href="/sign-in"
+                className="rounded-full border border-white/15 px-5 py-2.5 text-sm font-semibold text-zinc-200"
+              >
+                Sign In
+              </Link>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <Link
             href="/"
@@ -239,12 +271,14 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
           >
             Back to Discover
           </Link>
-          <Link
-            href="/my-stories"
-            className="rounded-full border border-white/15 px-5 py-2.5 text-sm font-semibold text-zinc-200"
-          >
-            My Stories
-          </Link>
+          {isSignedIn ? (
+            <Link
+              href="/my-stories"
+              className="rounded-full border border-white/15 px-5 py-2.5 text-sm font-semibold text-zinc-200"
+            >
+              My Stories
+            </Link>
+          ) : null}
           <Link
             href={`/story/${submittedId}`}
             className="rounded-full border border-white/15 px-5 py-2.5 text-sm font-semibold text-zinc-200"
@@ -359,7 +393,8 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
               </h2>
               <p className="mt-1 text-sm text-zinc-400">
                 Separate from typing/speaking above. Record video evidence. Max 5
-                minutes. Large recordings upload securely on submit (no compression).
+                minutes. Guests: up to 50 MB via Supabase. Free accounts: larger
+                recordings upload securely on submit (no compression).
               </p>
             </div>
             {recorded ? (
@@ -394,24 +429,14 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
                   </button>
                 </div>
               </div>
-            ) : canUploadMedia ? (
-              <button
-                type="button"
-                onClick={() => setRecorderOpen(true)}
-                className="w-full rounded-2xl bg-orange-500 py-3.5 text-sm font-black uppercase tracking-wide text-black"
-              >
-                Record Video Story
-              </button>
             ) : (
               <button
                 type="button"
-                onClick={() => {
-                  setMediaError("Sign in to upload video/audio");
-                  setPromptOpen(true);
-                }}
-                className="w-full rounded-2xl border border-white/15 bg-white/5 py-3.5 text-sm font-black uppercase tracking-wide text-zinc-200"
+                disabled={authLoading}
+                onClick={() => setRecorderOpen(true)}
+                className="w-full rounded-2xl bg-orange-500 py-3.5 text-sm font-black uppercase tracking-wide text-black disabled:opacity-40"
               >
-                Sign in to upload video/audio
+                Record Video Story
               </button>
             )}
           </section>
@@ -425,17 +450,17 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
                 Upload photos, videos, or documents you already have. Optional.
               </p>
               <p className="mt-1 text-xs text-zinc-500">
-                Images ≤ 10 MB · Videos ≤ 50 MB via Supabase · Larger videos (up to 1 GB) upload via R2 · PDFs ≤ 20 MB
+                Images ≤ 10 MB · Guests: video ≤ 50 MB (Supabase) · Free account: videos over 50 MB via R2 (up to 1 GB) · PDFs ≤ 20 MB
               </p>
-              {!canUploadMedia && (
-                <p className="mt-2 rounded-2xl border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
-                  Sign in to upload video/audio. Guests can still submit text (and speech-to-text).
+              {!isSignedIn && (
+                <p className="mt-2 rounded-2xl border border-sky-400/30 bg-sky-500/10 px-3 py-2 text-sm text-sky-100">
+                  Guests can attach video up to 50 MB. Larger videos need a free account.
                 </p>
               )}
             </div>
 
             <div className="grid gap-2 sm:grid-cols-3">
-              <label onClick={(e) => { if (!canUploadMedia) { e.preventDefault(); requireMediaAccount(); } }} className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-white/10 bg-black/30 px-3 py-4 text-center hover:bg-black/50">
+              <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-white/10 bg-black/30 px-3 py-4 text-center hover:bg-black/50">
                 <span className="text-sm font-bold text-white">Take Photo</span>
                 <span className="mt-1 text-[11px] text-zinc-500">Camera still</span>
                 <input
@@ -449,7 +474,7 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
                   }}
                 />
               </label>
-              <label onClick={(e) => { if (!canUploadMedia) { e.preventDefault(); requireMediaAccount(); } }} className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-white/10 bg-black/30 px-3 py-4 text-center hover:bg-black/50">
+              <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-white/10 bg-black/30 px-3 py-4 text-center hover:bg-black/50">
                 <span className="text-sm font-bold text-white">Choose Photos</span>
                 <span className="mt-1 text-[11px] text-zinc-500">From gallery</span>
                 <input
@@ -463,7 +488,7 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
                   }}
                 />
               </label>
-              <label onClick={(e) => { if (!canUploadMedia) { e.preventDefault(); requireMediaAccount(); } }} className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-white/10 bg-black/30 px-3 py-4 text-center hover:bg-black/50">
+              <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-white/10 bg-black/30 px-3 py-4 text-center hover:bg-black/50">
                 <span className="text-sm font-bold text-white">Upload Video</span>
                 <span className="mt-1 text-[11px] text-zinc-500">Existing file</span>
                 <input
@@ -477,7 +502,7 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
                 />
               </label>
             </div>
-            <label onClick={(e) => { if (!canUploadMedia) { e.preventDefault(); requireMediaAccount(); } }} className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-white/10 bg-black/30 px-4 py-4 text-center hover:bg-black/50">
+            <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-white/10 bg-black/30 px-4 py-4 text-center hover:bg-black/50">
               <span className="text-sm font-bold text-white">Upload documents / mixed files</span>
               <span className="mt-1 text-xs text-zinc-500">
                 JPG, PNG, WEBP, MP4, MOV, WEBM, PDF
@@ -589,14 +614,17 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
         onAccept={(video) => {
           setRecorderOpen(false);
           void (async () => {
-            if (!requireMediaAccount()) return;
-            const check = validateMediaFile(video.file);
+            if (authLoading) return;
+            const check = validateMediaFile(video.file, { emailAuth: isSignedIn });
             if (!check.ok) {
               setMediaError(check.error);
               setError(check.error);
+              if (!isSignedIn && video.file.size > SUPABASE_VIDEO_MAX) {
+                setPromptOpen(true);
+              }
               return;
             }
-            if (shouldUseR2ForVideo(video.file)) {
+            if (isSignedIn && shouldUseR2ForVideo(video.file)) {
               setRecorded(null);
               await prepareAndAddVideo(video.file);
               return;
@@ -610,7 +638,7 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
       <SignInPrompt
         open={promptOpen}
         onClose={() => setPromptOpen(false)}
-        action="upload media"
+        action="upload larger video"
       />
     </>
   );

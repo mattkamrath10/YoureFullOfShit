@@ -1,12 +1,14 @@
 import "server-only";
 
+import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { isEmailAuthUser } from "@/lib/auth/session";
 
 /**
- * Resolve the authenticated Supabase user for R2 upload APIs.
- * Phase 1: used by /api/r2/upload/* only — not wired to /tell.
+ * Resolve an email (free account) user for R2 upload APIs.
+ * Anonymous / guest sessions are rejected — R2 is email-only.
  */
-export async function requireAuthUser(): Promise<{ id: string }> {
+export async function requireAuthUser(): Promise<{ id: string; user: User }> {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser();
   if (error || !data.user) {
@@ -15,7 +17,20 @@ export async function requireAuthUser(): Promise<{ id: string }> {
       headers: { "Content-Type": "application/json" },
     });
   }
-  return { id: data.user.id };
+  if (!isEmailAuthUser(data.user)) {
+    throw new Response(
+      JSON.stringify({
+        error:
+          "A free account is required for large video uploads. Guests can upload videos up to 50 MB.",
+        code: "EMAIL_ACCOUNT_REQUIRED",
+      }),
+      {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  }
+  return { id: data.user.id, user: data.user };
 }
 
 export async function assertUserOwnsStory(args: {

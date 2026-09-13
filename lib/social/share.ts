@@ -1,7 +1,5 @@
 "use client";
 
-import { requireEmailUser } from "@/lib/social/auth";
-
 export type ShareStoryArgs = {
   url: string;
   title: string;
@@ -15,11 +13,9 @@ export type ShareResult =
 
 /**
  * Prefer Web Share API; fall back to clipboard copy of the URL.
- * Requires a real email account (share is account-gated).
+ * Available to guests and signed-in users (no account gate).
  */
 export async function shareStory(args: ShareStoryArgs): Promise<ShareResult> {
-  await requireEmailUser();
-
   const url = args.url.trim();
   const title = args.title.trim() || "You're Full of Shit";
   const text = (args.text ?? title).trim();

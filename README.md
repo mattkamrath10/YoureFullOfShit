@@ -1,33 +1,37 @@
-# YFOS Access — free public app + account-required community
+# YFOS Guest Video ≤50MB + access update
 
-Guests can discover, read, listen, and submit **text** stories.
-Like / Comment / Share / Follow / Report / Account / My Stories need a **FREE** account.
+Locked social matrix + guest Supabase media (≤50 MB). R2 stays email-only for large videos.
 
-## Database (required)
+## ACCESS (short)
 
-Run in Supabase SQL Editor **before** testing social writes:
-
-`supabase/migrations/20260914_social_grants_and_guest_access.sql`
-
-This adds table GRANTs for `authenticated` (fixes 42501) and SELECT for `anon` on public social reads.
-Does **not** drop tables, disable RLS, or grant anon writes.
+| | Guests | FREE email account |
+|--|--------|--------------------|
+| Discover / read / watch / listen / storyteller / text tell | Yes | Yes |
+| Video / image / audio ≤ 50 MB | Yes (Supabase only) | Yes (Supabase) |
+| Video > 50 MB | No → free account | Yes (R2) |
+| Share | Yes (Web Share / clipboard) | Yes |
+| View comments | Yes | Yes |
+| Like / Comment (post) / Follow | No → prompt | Yes |
+| My Stories / Edit / photo add | No → prompt | Yes |
+| Report | Keep current (account to submit OK) | Yes |
 
 ## Apply on PC
 
-1. Copy `yfos-access.tar.gz` + `APPLY_YFOS_ACCESS.ps1` into the Next.js app root
-2. Paste/run the SQL migration in Supabase
-3. `.\APPLY_YFOS_ACCESS.ps1`
+1. Copy `yfos-guest-video50.tar.gz` + `APPLY_YFOS_GUEST_VIDEO50.ps1` into the Next.js app root
+2. No new SQL (prior access / story-reports migrations unchanged)
+3. `.\APPLY_YFOS_GUEST_VIDEO50.ps1`
 
-## What this package ships
+## Ships
 
-- Social grants migration
-- `SignInPrompt` FREE-account copy + Create Free Account / Sign In
-- `StoryActions` — Like/Comment/Share/Follow gated; Share does **not** run for guests
-- `CommentSection` — guests list comments; write/report → prompt; 42501 → prompt
-- `lib/social/{auth,errors,likes,comments,follows,share}.ts`
-- `AccountPanel` + `FreeAccountGate` + gated `/my-stories`
-- `TellStoryForm` — guests: text+STT OK; media upload blocked with clear message
+- `StoryActions` — Share allowed for guests; Like/Follow still require email; Report preserved; Comment scrolls to list (view OK)
+- `CommentSection` — guests view comments; post still gated
+- `TellStoryForm` — guests attach ≤50 MB via Supabase; >50 MB prompts free account; email keeps R2
+- `lib/media.ts` + `lib/submit-story.ts` — client + insert-path reject guest `byte_size` > 50 MB; no R2 for non-email
+- `lib/social/share.ts` — no account gate
+- `lib/r2/auth.ts` + `/api/r2/upload/create` — email account required for R2 create
+- `docs/ACCESS_MATRIX.md`
 
 ## Preserved
 
-Discover UI, StoryNarrator compact, R2, media pipeline for signed-in users, admin, auth, narrator `/avatars` local fallback.
+R2 for signed-in large files, auth, moderation, story reports/edit (already on disk from prior packages).
+`ensureUser` anonymous ownership for guest submit still OK.
