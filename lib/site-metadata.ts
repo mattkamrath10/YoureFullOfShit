@@ -4,10 +4,15 @@ import { SITE_DESCRIPTION, SITE_NAME, getSiteUrl } from "@/lib/site";
 /** Public path for the 1200x630 social share image (do not use signed/private URLs). */
 export const OG_SHARE_PATH = "/og-share.png";
 
+/** Square master brand icon (public). */
+export const BRAND_ICON_PATH = "/yfos-icon.png";
+
 export function absoluteUrl(path: string): string {
   const base = getSiteUrl().replace(/\/$/, "");
   if (!path) return base;
-  return path.startsWith("http") ? path : `${base}${path.startsWith("/") ? "" : "/"}${path}`;
+  return path.startsWith("http")
+    ? path
+    : `${base}${path.startsWith("/") ? "" : "/"}${path}`;
 }
 
 export function getOgImageUrl(): string {
@@ -15,7 +20,7 @@ export function getOgImageUrl(): string {
 }
 
 /**
- * Root metadata with Open Graph + Twitter cards.
+ * Root metadata with Open Graph + Twitter cards + brand icons.
  * Use in app/layout.tsx: export const metadata = buildRootMetadata();
  */
 export function buildRootMetadata(): Metadata {
@@ -40,6 +45,7 @@ export function buildRootMetadata(): Metadata {
           url: OG_SHARE_PATH,
           width: 1200,
           height: 630,
+          type: "image/png",
           alt: SITE_NAME,
         },
       ],
@@ -51,8 +57,11 @@ export function buildRootMetadata(): Metadata {
       images: [image],
     },
     icons: {
-      icon: "/yfos-icon.png",
-      apple: "/yfos-icon.png",
+      icon: [
+        { url: BRAND_ICON_PATH, type: "image/png" },
+        { url: "/favicon.ico", sizes: "any" },
+      ],
+      apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
     },
   };
 }
@@ -93,6 +102,7 @@ export function buildStoryMetadata(args: {
           url: OG_SHARE_PATH,
           width: 1200,
           height: 630,
+          type: "image/png",
           alt: SITE_NAME,
         },
       ],
