@@ -32,26 +32,28 @@ export function StoryCard({
           : "border-white/10 bg-zinc-900/60 p-4 hover:border-white/20 hover:bg-zinc-900 sm:p-5"
       }`}
     >
-      <span
-        className={`absolute right-3 top-3 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-wide sm:right-4 sm:top-4 sm:text-[11px] ${STORY_TYPE_BADGE_CLASS[storyType]}`}
-      >
-        {storyTypeLabel}
-      </span>
-
-      <div className="mb-3 flex flex-wrap items-center justify-center gap-2 pr-24 text-[11px] font-semibold uppercase tracking-wide sm:pr-28">
-        {featured && (
-          <span className="rounded-full bg-orange-500 px-2.5 py-1 text-black">
-            Featured
+      {/* Top-left: category (+ featured / demo). Top-right: story type. */}
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wide">
+          {featured && (
+            <span className="rounded-full bg-orange-500 px-2.5 py-1 text-black">
+              Featured
+            </span>
+          )}
+          <span className="rounded-full bg-white/10 px-2.5 py-1 text-zinc-200">
+            {category}
           </span>
-        )}
-        <span className="rounded-full bg-white/10 px-2.5 py-1 text-zinc-200">
-          {category}
+          {story.is_demo && (
+            <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-2.5 py-1 text-amber-200">
+              Demo · Fiction
+            </span>
+          )}
+        </div>
+        <span
+          className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-wide sm:text-[11px] ${STORY_TYPE_BADGE_CLASS[storyType]}`}
+        >
+          {storyTypeLabel}
         </span>
-        {story.is_demo && (
-          <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-2.5 py-1 text-amber-200">
-            Demo · Fiction
-          </span>
-        )}
       </div>
 
       <h2
