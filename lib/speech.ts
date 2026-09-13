@@ -142,6 +142,15 @@ function clearKeepAlive() {
   }
 }
 
+function isIOS(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  const iOSDevice = /iPad|iPhone|iPod/.test(ua);
+  const iPadOS =
+    navigator.platform === "MacIntel" && (navigator.maxTouchPoints || 0) > 1;
+  return iOSDevice || iPadOS;
+}
+
 function stopAudioPlayback() {
   if (currentAudio) {
     try {
@@ -150,6 +159,9 @@ function stopAudioPlayback() {
       currentAudio.pause();
       currentAudio.removeAttribute("src");
       currentAudio.load();
+      if (currentAudio.parentNode) {
+        currentAudio.parentNode.removeChild(currentAudio);
+      }
     } catch {
       /* ignore */
     }
@@ -268,7 +280,8 @@ export async function speakStory(args: {
 }
 
 /**
- * Prefer OpenAI TTS via /api/narrate; fall back to browser SpeechSynthesis.
+ * Prefer OpenAI TTS via /api/narrate; fall back to browser SpeechSynthesis
+ * only when not on iOS (Safari SpeechSynthesis is often silent there).
  */
 export async function speakStorySmart(args: {
   text: string;
@@ -282,9 +295,17 @@ export async function speakStorySmart(args: {
 }): Promise<void> {
   stopStorySpeech();
   const myToken = speakToken;
+  const ios = isIOS();
 
   const fallbackBrowser = async () => {
     if (myToken !== speakToken) return;
+    if (ios) {
+      args.onError?.(
+        "Could not play narration audio on this iPhone. Check that OPENAI_API_KEY is set on the live site, then try Listen again.",
+      );
+      args.onEnd?.();
+      return;
+    }
     await speakStory({
       text: args.text,
       voiceHint: args.voiceHint,
@@ -297,7 +318,7 @@ export async function speakStorySmart(args: {
   };
 
   if (!args.text.trim()) {
-    args.onError?.("There’s no text to read.");
+    args.onError?.("There's no text to read.");
     return;
   }
 
@@ -314,22 +335,6 @@ export async function speakStorySmart(args: {
   }
 
   if (myToken !== speakToken) return;
-
-  if (response.status === 503) {
-    let code = "";
-    try {
-      const body = (await response.json()) as { error?: string };
-      code = body.error ?? "";
-    } catch {
-      /* ignore */
-    }
-    if (code === "not_configured" || !code) {
-      await fallbackBrowser();
-      return;
-    }
-    await fallbackBrowser();
-    return;
-  }
 
   if (!response.ok) {
     await fallbackBrowser();
@@ -351,10 +356,32 @@ export async function speakStorySmart(args: {
   }
 
   if (myToken !== speakToken) return;
+  if (!blob.size) {
+    await fallbackBrowser();
+    return;
+  }
 
   const objectUrl = URL.createObjectURL(blob);
   currentObjectUrl = objectUrl;
-  const audio = new Audio(objectUrl);
+
+  // iOS Safari: Audio() alone can "succeed" with no audible output.
+  // Attach a real element, force inline playback, unmute, full volume.
+  const audio = document.createElement("audio");
+  audio.setAttribute("playsinline", "true");
+  audio.setAttribute("webkit-playsinline", "true");
+  (audio as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
+  audio.preload = "auto";
+  audio.controls = false;
+  audio.muted = false;
+  audio.volume = 1;
+  audio.src = objectUrl;
+  audio.style.position = "fixed";
+  audio.style.width = "1px";
+  audio.style.height = "1px";
+  audio.style.opacity = "0";
+  audio.style.pointerEvents = "none";
+  audio.style.left = "-9999px";
+  document.body.appendChild(audio);
   currentAudio = audio;
 
   audio.onended = () => {
@@ -366,14 +393,14 @@ export async function speakStorySmart(args: {
   audio.onerror = () => {
     if (myToken !== speakToken) return;
     stopAudioPlayback();
-    void fallbackBrowser().catch(() => {
-      args.onError?.("Could not finish reading. You can still read the story on the page.");
-      args.onEnd?.();
-    });
+    void fallbackBrowser();
   };
 
   try {
-    await audio.play();
+    const playPromise = audio.play();
+    if (playPromise && typeof playPromise.then === "function") {
+      await playPromise;
+    }
   } catch {
     if (myToken !== speakToken) return;
     stopAudioPlayback();
@@ -382,5 +409,13 @@ export async function speakStorySmart(args: {
   }
 
   if (myToken !== speakToken) return;
+
+  // If play resolved but element is still paused/muted, treat as failure (common on iOS).
+  if (audio.paused || audio.muted) {
+    stopAudioPlayback();
+    await fallbackBrowser();
+    return;
+  }
+
   args.onStart?.();
 }
