@@ -41,7 +41,7 @@ textarea {
   font: inherit;
 }
 
-/* YFOS: seamless category carousel (11s for one unique pass (half previous speed) = translate -50%) */
+/* YFOS: seamless category carousel (16.5s for one unique pass (two-thirds of prior speed) = translate -50%) */
 @keyframes yfos-category-marquee {
   from {
     transform: translate3d(0, 0, 0);
@@ -52,7 +52,7 @@ textarea {
 }
 
 .animate-yfos-category-marquee {
-  animation: yfos-category-marquee 11s linear infinite;
+  animation: yfos-category-marquee 16.5s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
