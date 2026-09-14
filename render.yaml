@@ -2,6 +2,7 @@ services:
   - type: web
     name: youre-full-of-shit
     runtime: node
+    plan: free
     buildCommand: npm install && npm run build
     startCommand: npm run start
     envVars:
