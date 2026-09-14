@@ -65,7 +65,7 @@ export function StoryCard({
         </div>
 
         <h2
-          className={`font-black tracking-tight text-white ${
+          className={`text-center font-black tracking-tight text-white ${
             emphasized ? "text-xl sm:text-2xl" : "text-lg sm:text-xl"
           }`}
         >

@@ -71,31 +71,38 @@ export function DiscoverHome({
           </p>
         </div>
 
-        <div className="relative mx-auto w-[min(72vw,280px)] sm:w-[320px]">
-          <div className="pointer-events-none absolute -inset-6 rounded-[2rem] bg-orange-500/20 blur-3xl sm:-inset-10" />
-          <div className="relative overflow-hidden rounded-[1.75rem] border-2 border-orange-400 shadow-[0_0_48px_rgba(249,115,22,0.45)] sm:rounded-[2rem] sm:border-[3px]">
-            <Image
-              src="/yfos-icon.png"
-              alt="You're Full of Shit mascot"
-              width={640}
-              height={640}
-              priority
-              className="h-auto w-full bg-black"
-            />
+        {/* Mascot + side phrases: phrases live in side gutters, never on the icon */}
+        <div className="relative mx-auto w-full max-w-3xl overflow-x-clip px-1 sm:px-2">
+          <div className="pointer-events-none absolute inset-y-4 left-0 z-10 flex w-[28%] max-w-[9.5rem] flex-col justify-between py-2 sm:inset-y-6 sm:w-[30%] sm:max-w-[11rem] md:max-w-[13rem]">
+            <span className="origin-left -rotate-[18deg] self-start text-left text-[11px] font-black uppercase leading-tight tracking-wide text-orange-400 drop-shadow-[0_0_12px_rgba(249,115,22,0.55)] sm:text-sm md:text-base">
+              Real stories
+            </span>
+            <span className="origin-left -rotate-[12deg] self-start text-left text-[11px] font-black uppercase leading-tight tracking-wide text-orange-400 drop-shadow-[0_0_12px_rgba(249,115,22,0.55)] sm:text-sm md:text-base">
+              Wild confessions
+            </span>
           </div>
-          {/* Decorative keyword chips — visual only */}
-          <span className="pointer-events-none absolute -left-2 top-6 rotate-[-18deg] text-[10px] font-black uppercase tracking-wide text-orange-400/90 sm:-left-8 sm:text-xs">
-            Real stories
-          </span>
-          <span className="pointer-events-none absolute -right-1 top-10 rotate-[16deg] text-[10px] font-black uppercase tracking-wide text-orange-400/90 sm:-right-10 sm:text-xs">
-            Funny moments
-          </span>
-          <span className="pointer-events-none absolute -left-1 bottom-16 rotate-[-12deg] text-[10px] font-black uppercase tracking-wide text-orange-400/90 sm:-left-12 sm:text-xs">
-            Wild confessions
-          </span>
-          <span className="pointer-events-none absolute -right-2 bottom-20 rotate-[14deg] text-[10px] font-black uppercase tracking-wide text-orange-400/90 sm:-right-8 sm:text-xs">
-            Crazy experiences
-          </span>
+          <div className="pointer-events-none absolute inset-y-4 right-0 z-10 flex w-[28%] max-w-[9.5rem] flex-col justify-between py-2 sm:inset-y-6 sm:w-[30%] sm:max-w-[11rem] md:max-w-[13rem]">
+            <span className="origin-right rotate-[16deg] self-end text-right text-[11px] font-black uppercase leading-tight tracking-wide text-orange-400 drop-shadow-[0_0_12px_rgba(249,115,22,0.55)] sm:text-sm md:text-base">
+              Funny moments
+            </span>
+            <span className="origin-right rotate-[14deg] self-end text-right text-[11px] font-black uppercase leading-tight tracking-wide text-orange-400 drop-shadow-[0_0_12px_rgba(249,115,22,0.55)] sm:text-sm md:text-base">
+              Crazy experiences
+            </span>
+          </div>
+
+          <div className="relative z-0 mx-auto w-[min(58vw,240px)] sm:w-[280px] md:w-[300px]">
+            <div className="pointer-events-none absolute -inset-6 rounded-[2rem] bg-orange-500/20 blur-3xl sm:-inset-10" />
+            <div className="relative overflow-hidden rounded-[1.75rem] border-2 border-orange-400 shadow-[0_0_48px_rgba(249,115,22,0.45)] sm:rounded-[2rem] sm:border-[3px]">
+              <Image
+                src="/yfos-icon.png"
+                alt="You're Full of Shit mascot"
+                width={640}
+                height={640}
+                priority
+                className="h-auto w-full bg-black"
+              />
+            </div>
+          </div>
         </div>
 
         <div className="space-y-3">
@@ -110,9 +117,6 @@ export function DiscoverHome({
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500 sm:text-xs">
             Or just dive in and see what others are sharing
           </p>
-          <div className="text-orange-400/80" aria-hidden>
-            ⌄
-          </div>
         </div>
       </section>
 
