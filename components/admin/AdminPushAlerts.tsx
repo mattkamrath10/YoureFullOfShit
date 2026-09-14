@@ -33,13 +33,16 @@ export function AdminPushAlerts() {
       "serviceWorker" in navigator &&
       "PushManager" in window;
 
-    setStandalone(isStandalone());
-    if (!supported) {
-      setStatus("unsupported");
-      return;
-    }
-
     void (async () => {
+      // Yield once so status is synchronized from the browser after mount,
+      // rather than as a synchronous effect-state update.
+      await Promise.resolve();
+      if (cancelled) return;
+      setStandalone(isStandalone());
+      if (!supported) {
+        setStatus("unsupported");
+        return;
+      }
       if (Notification.permission === "denied") {
         if (!cancelled) setStatus("denied");
         return;
