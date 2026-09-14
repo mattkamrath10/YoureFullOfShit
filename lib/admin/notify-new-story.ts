@@ -1,5 +1,6 @@
 import "server-only";
 import { Resend } from "resend";
+import { sendAdminPushNotifications } from "@/lib/admin/send-push-notifications";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getSiteUrl } from "@/lib/site";
 import {
@@ -77,15 +78,6 @@ async function resolveAdminEmails(
 export async function notifyAdminsOfNewStory(
   storyId: string,
 ): Promise<NotifyNewStoryResult> {
-  const resendKey = process.env.RESEND_API_KEY?.trim();
-  const from = process.env.RESEND_FROM_EMAIL?.trim();
-  if (!resendKey || !from) {
-    console.error(
-      "[admin-notify] RESEND_API_KEY or RESEND_FROM_EMAIL not configured; skipping email.",
-    );
-    return { ok: false, error: "resend_not_configured", storyId };
-  }
-
   let service: ReturnType<typeof createServiceClient>;
   try {
     service = createServiceClient();
@@ -94,7 +86,7 @@ export async function notifyAdminsOfNewStory(
     return { ok: false, error: "service_role_missing", storyId };
   }
 
-  // Dedupe claim (unique story_id).
+  // Dedupe claim (unique story_id) covers all alert channels.
   const { error: claimErr } = await service
     .from("admin_story_notifications")
     .insert({
@@ -174,18 +166,6 @@ export async function notifyAdminsOfNewStory(
         ? "Audio"
         : "Text";
 
-  const recipients = await resolveAdminEmails(service);
-  if (recipients.length === 0) {
-    console.error(
-      "[admin-notify] no admin emails resolved (profiles.is_admin + ADMIN_NOTIFY_EMAIL).",
-    );
-    await service
-      .from("admin_story_notifications")
-      .update({ status: "failed", error: "no_admin_recipients" })
-      .eq("story_id", storyId);
-    return { ok: false, error: "no_admin_recipients", storyId };
-  }
-
   const when = (() => {
     try {
       return new Date(story.created_at).toLocaleString("en-US", {
@@ -202,6 +182,51 @@ export async function notifyAdminsOfNewStory(
     .trim()
     .slice(0, 280);
   const reviewUrl = `${getSiteUrl()}/admin/stories?story=${encodeURIComponent(storyId)}`;
+  const push = await sendAdminPushNotifications(service, {
+    title: "New story waiting for review",
+    body: String(story.title).trim() || "A new story is pending your review.",
+    url: reviewUrl,
+    tag: `yfosh-story-${storyId}`,
+  });
+
+  if (push.allDelivered) {
+    console.info("[admin-notify] Web Push delivered", {
+      storyId,
+      toCount: push.delivered,
+    });
+    await service
+      .from("admin_story_notifications")
+      .update({ status: "sent", error: null })
+      .eq("story_id", storyId);
+    return { ok: true, sent: true, storyId };
+  }
+
+  // Email remains the fallback for any administrator without a working
+  // subscription, as well as when VAPID or Web Push is unavailable.
+  const resendKey = process.env.RESEND_API_KEY?.trim();
+  const from = process.env.RESEND_FROM_EMAIL?.trim();
+  if (!resendKey || !from) {
+    console.error(
+      "[admin-notify] Web Push incomplete and Resend is not configured.",
+    );
+    await service
+      .from("admin_story_notifications")
+      .update({ status: "failed", error: "push_incomplete_and_resend_not_configured" })
+      .eq("story_id", storyId);
+    return { ok: false, error: "resend_not_configured", storyId };
+  }
+
+  const recipients = await resolveAdminEmails(service);
+  if (recipients.length === 0) {
+    console.error(
+      "[admin-notify] no admin emails resolved (profiles.is_admin + ADMIN_NOTIFY_EMAIL).",
+    );
+    await service
+      .from("admin_story_notifications")
+      .update({ status: "failed", error: "no_admin_recipients" })
+      .eq("story_id", storyId);
+    return { ok: false, error: "no_admin_recipients", storyId };
+  }
 
   const subject = "New Story Submitted — You're Full of Shit";
   const text = [
