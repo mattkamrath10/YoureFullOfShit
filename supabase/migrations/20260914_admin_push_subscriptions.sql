@@ -18,14 +18,28 @@ create index if not exists admin_push_subscriptions_user_id_idx
 
 alter table public.admin_push_subscriptions enable row level security;
 
--- Users can only ever manage their own browser endpoints. The application route
--- additionally verifies profiles.is_admin before it writes an endpoint.
+-- Only current admins can manage their own browser endpoints. The application
+-- route repeats this check before using the service role for writes.
 create policy "Users manage own admin push subscriptions"
   on public.admin_push_subscriptions
   for all
   to authenticated
-  using ((select auth.uid()) = user_id)
-  with check ((select auth.uid()) = user_id);
+  using (
+    (select auth.uid()) = user_id
+    and exists (
+      select 1 from public.profiles
+      where profiles.id = (select auth.uid())
+        and profiles.is_admin = true
+    )
+  )
+  with check (
+    (select auth.uid()) = user_id
+    and exists (
+      select 1 from public.profiles
+      where profiles.id = (select auth.uid())
+        and profiles.is_admin = true
+    )
+  );
 
 revoke all on public.admin_push_subscriptions from anon;
 grant select, insert, update, delete on public.admin_push_subscriptions to authenticated;
