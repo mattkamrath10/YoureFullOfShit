@@ -13,11 +13,14 @@ function isStandalone(): boolean {
   );
 }
 
-function urlBase64ToUint8Array(value: string): Uint8Array {
+function urlBase64ToArrayBuffer(value: string): ArrayBuffer {
   const padded = `${value}${"=".repeat((4 - (value.length % 4)) % 4)}`;
   const base64 = padded.replace(/-/g, "+").replace(/_/g, "/");
   const decoded = window.atob(base64);
-  return Uint8Array.from(decoded, (character) => character.charCodeAt(0));
+  return Uint8Array.from(
+    decoded,
+    (character) => character.charCodeAt(0),
+  ).buffer as ArrayBuffer;
 }
 
 export function AdminPushAlerts() {
@@ -83,7 +86,7 @@ export function AdminPushAlerts() {
       const registration = await navigator.serviceWorker.register("/admin-push-sw.js");
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+        applicationServerKey: urlBase64ToArrayBuffer(vapidPublicKey),
       });
       const response = await fetch("/api/admin/push-subscriptions", {
         method: "POST",
