@@ -9,29 +9,18 @@ import {
 } from "@/lib/story-type";
 
 export type NotifyNewStoryResult =
-  | { ok: true; skipped?: "duplicate" | "no_recipients" | "not_pending" }
-  | { ok: false; error: string };
-
-type StoryRow = {
-  id: string;
-  title: string;
-  body: string | null;
-  preview: string | null;
-  status: string;
-  is_anonymous: boolean;
-  author_id: string | null;
-  created_at: string;
-  categories: { name: string } | { name: string }[] | null;
-  profiles: { display_name: string | null } | { display_name: string | null }[] | null;
-  story_media:
-    | (MediaLike & { media_type?: string | null; mime_type?: string | null })[]
-    | null;
-};
-
-function one<T>(v: T | T[] | null | undefined): T | null {
-  if (!v) return null;
-  return Array.isArray(v) ? (v[0] ?? null) : v;
-}
+  | {
+      ok: true;
+      sent?: true;
+      skipped?: "duplicate" | "not_pending";
+      storyId?: string;
+    }
+  | {
+      ok: false;
+      error: string;
+      detail?: string;
+      storyId?: string;
+    };
 
 function escapeHtml(s: string): string {
   return s
@@ -70,7 +59,6 @@ async function resolveAdminEmails(
     }
   }
 
-  // Optional server-only fallback (comma-separated). Not NEXT_PUBLIC_. Not in client code.
   const fallback = process.env.ADMIN_NOTIFY_EMAIL?.trim();
   if (fallback) {
     for (const part of fallback.split(",")) {
@@ -84,7 +72,7 @@ async function resolveAdminEmails(
 
 /**
  * Send one admin email for a newly pending story. Idempotent per story_id.
- * Never throws to callers for Resend/config issues — returns { ok:false }.
+ * Never throws for Resend/config issues — returns { ok:false }.
  */
 export async function notifyAdminsOfNewStory(
   storyId: string,
@@ -95,7 +83,7 @@ export async function notifyAdminsOfNewStory(
     console.error(
       "[admin-notify] RESEND_API_KEY or RESEND_FROM_EMAIL not configured; skipping email.",
     );
-    return { ok: false, error: "resend_not_configured" };
+    return { ok: false, error: "resend_not_configured", storyId };
   }
 
   let service: ReturnType<typeof createServiceClient>;
@@ -103,10 +91,10 @@ export async function notifyAdminsOfNewStory(
     service = createServiceClient();
   } catch (e) {
     console.error("[admin-notify] service client unavailable", e);
-    return { ok: false, error: "service_role_missing" };
+    return { ok: false, error: "service_role_missing", storyId };
   }
 
-  // Dedupe claim first (unique story_id). If already claimed, skip.
+  // Dedupe claim (unique story_id).
   const { error: claimErr } = await service
     .from("admin_story_notifications")
     .insert({
@@ -115,34 +103,76 @@ export async function notifyAdminsOfNewStory(
       status: "sending",
     });
   if (claimErr) {
-    // Unique violation = already notified
     if (
       claimErr.code === "23505" ||
       /duplicate|unique/i.test(claimErr.message ?? "")
     ) {
-      return { ok: true, skipped: "duplicate" };
+      return { ok: true, skipped: "duplicate", storyId };
     }
     console.error("[admin-notify] dedupe insert failed", claimErr);
-    // Continue without hard fail — still try to email once
+    // Continue — still try to email once
   }
 
+  // Plain stories row only — nested embeds were returning PostgREST errors
+  // that we incorrectly labeled story_not_found.
   const { data: story, error: storyErr } = await service
     .from("stories")
     .select(
-      "id, title, body, preview, status, is_anonymous, author_id, created_at, categories(name), profiles(display_name), story_media(media_type, mime_type)",
+      "id, title, body, preview, status, is_anonymous, author_id, category_id, created_at",
     )
     .eq("id", storyId)
     .maybeSingle();
 
-  if (storyErr || !story) {
-    console.error("[admin-notify] story load failed", storyErr);
-    return { ok: false, error: "story_not_found" };
+  if (storyErr) {
+    console.error("[admin-notify] story lookup failed", storyId, storyErr);
+    return {
+      ok: false,
+      error: "story_lookup_failed",
+      detail: storyErr.message ?? String(storyErr.code ?? "unknown"),
+      storyId,
+    };
+  }
+  if (!story) {
+    console.error("[admin-notify] story id not in stories table", storyId);
+    return { ok: false, error: "story_not_found", storyId };
   }
 
-  const row = story as unknown as StoryRow;
-  if (row.status !== "pending") {
-    return { ok: true, skipped: "not_pending" };
+  if (story.status !== "pending") {
+    return { ok: true, skipped: "not_pending", storyId };
   }
+
+  let category = "Uncategorized";
+  if (story.category_id) {
+    const { data: cat } = await service
+      .from("categories")
+      .select("name")
+      .eq("id", story.category_id)
+      .maybeSingle();
+    if (cat?.name?.trim()) category = cat.name.trim();
+  }
+
+  let submitter = "Anonymous";
+  if (!story.is_anonymous && story.author_id) {
+    const { data: profile } = await service
+      .from("profiles")
+      .select("display_name")
+      .eq("id", story.author_id)
+      .maybeSingle();
+    submitter = profile?.display_name?.trim() || "Named author";
+  }
+
+  const { data: mediaRows } = await service
+    .from("story_media")
+    .select("media_type, mime_type")
+    .eq("story_id", storyId);
+  const media = (mediaRows ?? []) as MediaLike[];
+  const typeLabel = getStoryTypeLabel(media);
+  const typeShort =
+    getStoryType(media) === "video"
+      ? "Video"
+      : getStoryType(media) === "audio"
+        ? "Audio"
+        : "Text";
 
   const recipients = await resolveAdminEmails(service);
   if (recipients.length === 0) {
@@ -151,42 +181,33 @@ export async function notifyAdminsOfNewStory(
     );
     await service
       .from("admin_story_notifications")
-      .update({ status: "failed", error: "no_recipients" })
+      .update({ status: "failed", error: "no_admin_recipients" })
       .eq("story_id", storyId);
-    return { ok: true, skipped: "no_recipients" };
+    return { ok: false, error: "no_admin_recipients", storyId };
   }
 
-  const category =
-    one(row.categories)?.name?.trim() || "Uncategorized";
-  const submitter = row.is_anonymous
-    ? "Anonymous"
-    : one(row.profiles)?.display_name?.trim() || "Named author";
-  const typeLabel = getStoryTypeLabel(row.story_media);
-  const typeShort =
-    getStoryType(row.story_media) === "video"
-      ? "Video"
-      : getStoryType(row.story_media) === "audio"
-        ? "Audio"
-        : "Text";
   const when = (() => {
     try {
-      return new Date(row.created_at).toLocaleString("en-US", {
+      return new Date(story.created_at).toLocaleString("en-US", {
         timeZone: "America/Los_Angeles",
         dateStyle: "medium",
         timeStyle: "short",
       });
     } catch {
-      return row.created_at;
+      return String(story.created_at);
     }
   })();
-  const excerpt = (row.preview || row.body || "").replace(/\s+/g, " ").trim().slice(0, 280);
+  const excerpt = (story.preview || story.body || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 280);
   const reviewUrl = `${getSiteUrl()}/admin/stories?story=${encodeURIComponent(storyId)}`;
 
   const subject = "New Story Submitted — You're Full of Shit";
   const text = [
     "NEW STORY WAITING FOR REVIEW",
     "",
-    `Title: ${row.title}`,
+    `Title: ${story.title}`,
     `Category: ${category}`,
     `Type: ${typeShort} (${typeLabel})`,
     `Submitted by: ${submitter}`,
@@ -206,7 +227,7 @@ export async function notifyAdminsOfNewStory(
     <tr><td style="padding:28px 24px;">
       <p style="margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:0.12em;color:#fb923c;text-transform:uppercase;">You're Full of Shit</p>
       <h1 style="margin:0 0 20px;font-size:22px;line-height:1.3;color:#fff;">NEW STORY WAITING FOR REVIEW</h1>
-      <p style="margin:0 0 8px;"><strong style="color:#a1a1aa;">Title:</strong> ${escapeHtml(row.title)}</p>
+      <p style="margin:0 0 8px;"><strong style="color:#a1a1aa;">Title:</strong> ${escapeHtml(String(story.title))}</p>
       <p style="margin:0 0 8px;"><strong style="color:#a1a1aa;">Category:</strong> ${escapeHtml(category)}</p>
       <p style="margin:0 0 8px;"><strong style="color:#a1a1aa;">Type:</strong> ${escapeHtml(typeShort)} (${escapeHtml(typeLabel)})</p>
       <p style="margin:0 0 8px;"><strong style="color:#a1a1aa;">Submitted by:</strong> ${escapeHtml(submitter)}</p>
@@ -224,7 +245,7 @@ export async function notifyAdminsOfNewStory(
 
   try {
     const resend = new Resend(resendKey);
-    const { error: sendErr } = await resend.emails.send({
+    const { data: sendData, error: sendErr } = await resend.emails.send({
       from,
       to: recipients,
       subject,
@@ -240,8 +261,18 @@ export async function notifyAdminsOfNewStory(
           error: String(sendErr.message ?? sendErr).slice(0, 500),
         })
         .eq("story_id", storyId);
-      return { ok: false, error: "resend_send_failed" };
+      return {
+        ok: false,
+        error: "resend_send_failed",
+        detail: String(sendErr.message ?? sendErr).slice(0, 300),
+        storyId,
+      };
     }
+    console.info("[admin-notify] Resend accepted", {
+      storyId,
+      emailId: sendData?.id,
+      toCount: recipients.length,
+    });
   } catch (e) {
     console.error("[admin-notify] Resend threw", e);
     await service
@@ -251,7 +282,12 @@ export async function notifyAdminsOfNewStory(
         error: e instanceof Error ? e.message.slice(0, 500) : "send_threw",
       })
       .eq("story_id", storyId);
-    return { ok: false, error: "resend_threw" };
+    return {
+      ok: false,
+      error: "resend_threw",
+      detail: e instanceof Error ? e.message.slice(0, 300) : "send_threw",
+      storyId,
+    };
   }
 
   await service
@@ -263,5 +299,5 @@ export async function notifyAdminsOfNewStory(
     })
     .eq("story_id", storyId);
 
-  return { ok: true };
+  return { ok: true, sent: true, storyId };
 }

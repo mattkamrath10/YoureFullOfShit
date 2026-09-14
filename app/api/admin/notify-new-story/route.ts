@@ -6,8 +6,8 @@ export const runtime = "nodejs";
 
 /**
  * Called after a successful pending story insert.
- * Auth: session must own the story (or be admin). Never fails the submitter UX —
- * always returns 200 with { ok } so clients can fire-and-forget.
+ * Auth: session must own the story (or be admin).
+ * Story submission already succeeded — notify failures return JSON errors, not UX blockers.
  */
 export async function POST(req: Request) {
   try {
@@ -31,21 +31,37 @@ export async function POST(req: Request) {
       );
     }
 
+    // Same table/column as lib/submit-story.ts insert: public.stories.id
     const { data: story, error } = await supabase
       .from("stories")
       .select("id, author_id, status")
       .eq("id", storyId)
       .maybeSingle();
 
-    if (error || !story) {
-      return NextResponse.json(
-        { ok: false, error: "not_found" },
-        { status: 404 },
-      );
+    if (error) {
+      console.error("[admin-notify] session story lookup failed", storyId, error);
+      return NextResponse.json({
+        ok: false,
+        error: "story_lookup_failed",
+        detail: error.message,
+        storyId,
+      });
+    }
+    if (!story) {
+      return NextResponse.json({
+        ok: false,
+        error: "story_not_found",
+        detail: "Session client could not read stories.id for this storyId",
+        storyId,
+      });
     }
 
     if (story.status !== "pending") {
-      return NextResponse.json({ ok: true, skipped: "not_pending" });
+      return NextResponse.json({
+        ok: true,
+        skipped: "not_pending",
+        storyId,
+      });
     }
 
     const isAuthor = story.author_id === auth.user.id;
@@ -57,7 +73,7 @@ export async function POST(req: Request) {
         .maybeSingle();
       if (!profile?.is_admin) {
         return NextResponse.json(
-          { ok: false, error: "forbidden" },
+          { ok: false, error: "forbidden", storyId },
           { status: 403 },
         );
       }
@@ -67,7 +83,6 @@ export async function POST(req: Request) {
     return NextResponse.json(result);
   } catch (e) {
     console.error("[admin-notify] route error", e);
-    // Do not 500 in a way that worries the client — submission already succeeded.
     return NextResponse.json({
       ok: false,
       error: e instanceof Error ? e.message : "notify_failed",
