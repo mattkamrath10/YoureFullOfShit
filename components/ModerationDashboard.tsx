@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { ModerationActions } from "@/components/ModerationActions";
+import { StoryDeleteButton } from "@/components/StoryDeleteButton";
 import {
   getStoryType,
   getStoryTypeLabel,
@@ -159,6 +160,10 @@ export function ModerationDashboard({
           : s,
       ),
     );
+  }
+
+  function onStoryDeleted(storyId: string) {
+    setStories((prev) => prev.filter((story) => story.id !== storyId));
   }
 
   return (
@@ -325,6 +330,7 @@ export function ModerationDashboard({
                   showModeratedMeta={tab !== "pending"}
                   highlighted={highlightStoryId === story.id}
                   onStatusChange={onStatusChange}
+                  onStoryDeleted={onStoryDeleted}
                 />
               ))}
             </div>
@@ -578,6 +584,7 @@ function ModerationCard({
   showModeratedMeta,
   highlighted = false,
   onStatusChange,
+  onStoryDeleted,
 }: {
   story: Story;
   showModeratedMeta: boolean;
@@ -586,6 +593,7 @@ function ModerationCard({
     storyId: string,
     next: "published" | "rejected" | "pending",
   ) => void;
+  onStoryDeleted: (storyId: string) => void;
 }) {
   const status = (story.status ?? "pending") as StoryStatus;
   const flags = mediaFlags(story);
@@ -653,6 +661,12 @@ function ModerationCard({
         status={status}
         onStatusChange={onStatusChange}
       />
+      <div className="mt-3 flex justify-center">
+        <StoryDeleteButton
+          storyId={story.id}
+          onDeleted={() => onStoryDeleted(story.id)}
+        />
+      </div>
     </article>
   );
 }

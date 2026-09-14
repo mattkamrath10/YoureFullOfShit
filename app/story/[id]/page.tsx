@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StoryDetail } from "@/components/StoryDetail";
+import { isEmailAuthUser } from "@/lib/auth/session";
 import { buildStoryMetadata } from "@/lib/site-metadata";
 import { getSignedMedia, getStoryById } from "@/lib/stories";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +55,20 @@ export default async function StoryPage({
   if (!story) notFound();
 
   const media = await getSignedMedia(story.story_media);
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  const user = auth.user;
+  let canDelete = Boolean(isEmailAuthUser(user) && story.author_id === user?.id);
+  const isOwner = canDelete;
+
+  if (isEmailAuthUser(user) && !canDelete) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_admin")
+      .eq("id", user.id)
+      .maybeSingle();
+    canDelete = Boolean(profile?.is_admin);
+  }
 
   return (
     <div className="space-y-4">
@@ -62,7 +78,12 @@ export default async function StoryPage({
       >
         Back to Discover
       </Link>
-      <StoryDetail story={story} media={media} />
+      <StoryDetail
+        story={story}
+        media={media}
+        canDelete={canDelete}
+        deleteRedirect={isOwner ? "/my-stories" : "/admin/stories"}
+      />
     </div>
   );
 }
