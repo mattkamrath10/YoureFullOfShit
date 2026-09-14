@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: auth, error: authError } = await supabase.auth.getUser();
   const user = auth.user;
-  if (authError || !isEmailAuthUser(user)) {
+  if (authError || !user || !isEmailAuthUser(user)) {
     return Response.json({ error: "Sign in to delete a story." }, { status: 401 });
   }
 

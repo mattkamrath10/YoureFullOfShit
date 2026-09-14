@@ -58,10 +58,10 @@ export default async function StoryPage({
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   const user = auth.user;
-  let canDelete = Boolean(isEmailAuthUser(user) && story.author_id === user?.id);
+  let canDelete = Boolean(user && isEmailAuthUser(user) && story.author_id === user.id);
   const isOwner = canDelete;
 
-  if (isEmailAuthUser(user) && !canDelete) {
+  if (user && isEmailAuthUser(user) && !canDelete) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("is_admin")
