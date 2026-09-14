@@ -6,10 +6,10 @@ This package does **not** deploy the app and does **not** claim the site is live
 Replace every `YOUR_DOMAIN` / placeholder with your real values locally.
 **Never paste secrets, API keys, or service-role keys into chat.**
 
-Recommended hosting: **Vercel** (simplest for Next.js App Router + Route Handlers + server env).
+Recommended hosting: **Render Web Service** via the included `render.yaml` Blueprint. It runs this app with the standard Next.js Node server, preserving Route Handlers, cookie auth SSR, and server-side SDKs.
 
 Brief alternatives:
-- **Cloudflare Pages / Workers**: possible with OpenNext adapters, but Next server features (Route Handlers for R2 multipart, cookie auth SSR, Node SDK) are more constrained than Vercel. Extra adapter work; not the lowest-friction path for this codebase.
+- **Cloudflare Pages / Workers**: possible with OpenNext adapters, but Next server features (Route Handlers for R2 multipart, cookie auth SSR, Node SDK) are more constrained than a Node web service. Extra adapter work; not the lowest-friction path for this codebase.
 - **Self-hosted Node** (Docker / Fly / Railway): fine if you already operate Node; you own TLS, scaling, and env yourself.
 
 ---
@@ -28,24 +28,24 @@ Brief alternatives:
 ## B. Choose domain (placeholder)
 
 - [ ] **[USER ACTION REQUIRED]** Pick production hostname, e.g. `https://YOUR_DOMAIN` (and optional `www`).
-- [ ] Decide whether apex + www both serve the app (Vercel usually redirects one to the other).
+- [ ] Decide whether apex + www both serve the app and configure the redirect at Render or your DNS provider.
 - [ ] Set `NEXT_PUBLIC_SITE_URL=https://YOUR_DOMAIN` (no trailing slash) once known.
 
 ---
 
-## C. Vercel project setup
+## C. Render Blueprint setup
 
-- [ ] **[USER ACTION REQUIRED]** Create a Vercel account/team if needed.
-- [ ] **[USER ACTION REQUIRED]** Import the Git repo (or deploy from CLI) as a new Vercel project.
-- [ ] Framework Preset: **Next.js**. Root directory: app root (where `package.json` lives).
-- [ ] Build command: `next build` (default). Install: `npm install` (or project lockfile default).
-- [ ] Node version: match local (18+ / 20 LTS recommended). Set in Project Settings -> General if needed.
+- [ ] **[USER ACTION REQUIRED]** Create a Render account/team if needed.
+- [ ] **[USER ACTION REQUIRED]** In Render, create a Blueprint from this Git repository and apply `render.yaml`.
+- [ ] Confirm the service root is the app root (where `package.json` lives).
+- [ ] The Blueprint uses `npm install && npm run build`, `npm run start`, and Node 20.
+- [ ] Add every requested environment variable in Render before the first deploy. Values are intentionally not stored in the Blueprint.
 - [ ] Do **not** change R2 architecture or the **50 MB** video routing (Supabase Storage for <= 50 MB video path; R2 multipart for larger — leave as implemented).
 - [ ] Preview deployments: useful for QA; Production branch typically `main`.
 
 ---
 
-## D. Environment variables (Vercel Project Settings -> Environment Variables)
+## D. Environment variables (Render service -> Environment)
 
 Mark each for Production (and Preview if you want R2/auth to work on previews).
 
@@ -70,12 +70,16 @@ Mark each for Production (and Preview if you want R2/auth to work on previews).
 | `R2_MAX_VIDEO_BYTES` | Optional | Default `1073741824` (1 GiB); must be >= 52428800 |
 | `OPENAI_API_KEY` | Optional | Narrator TTS; without it, browser voice fallback |
 | `OPENAI_TTS_MODEL` | Optional | Default `tts-1-hd` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Required for admin notify | Server-only Supabase service_role key |
+| `RESEND_API_KEY` | Required for admin notify | Resend API key |
+| `RESEND_FROM_EMAIL` | Required for admin notify | Verified Resend sender |
+| `ADMIN_NOTIFY_EMAIL` | Optional | Comma-separated fallback admin recipients |
 
-- [ ] **[USER ACTION REQUIRED]** Paste values into Vercel (or `.env.local` for local only). Use `.env.example` as the name checklist.
+- [ ] **[USER ACTION REQUIRED]** Copy values from Vercel to Render (or use `.env.local` for local only). Use `.env.example` as the name checklist.
 - [ ] Confirm **no** `NEXT_PUBLIC_OPENAI_API_KEY` and **no** Supabase **service_role** in client env.
 - [ ] Redeploy after changing env vars.
 
-`VERCEL_URL` is set automatically by Vercel; `getSiteUrl()` falls back to it if `NEXT_PUBLIC_SITE_URL` is missing (prefer setting the public site URL explicitly).
+Set `NEXT_PUBLIC_SITE_URL` explicitly. If it is absent, `getSiteUrl()` falls back to Render's automatic `RENDER_EXTERNAL_URL`; localhost is the final fallback.
 
 ---
 
@@ -91,7 +95,7 @@ Dashboard -> Authentication -> URL Configuration:
   - `https://YOUR_DOMAIN/create-account`
   - `http://localhost:3000/**`
   - `http://localhost:3000/reset-password`
-  - Preview URLs if used: `https://*.vercel.app/**` (tighten if your Supabase plan/policy requires exact URLs)
+  - Render preview URLs if used: add their exact origins and redirect paths (tighten to only the environments you use)
 
 Password reset in app uses:
 
@@ -177,19 +181,17 @@ update public.profiles set is_admin = true where id = 'YOUR_AUTH_USER_UUID';
 
 ---
 
-## I. DNS for Vercel
+## I. DNS for Render
 
-- [ ] **[USER ACTION REQUIRED]** In Vercel -> Project -> Settings -> Domains, add `YOUR_DOMAIN` (and `www` if desired).
-- [ ] **[USER ACTION REQUIRED]** At your DNS host, add the records Vercel shows (typical):
+- [ ] **[USER ACTION REQUIRED]** In Render -> service -> Settings -> Custom Domains, add `YOUR_DOMAIN` (and `www` if desired).
+- [ ] **[USER ACTION REQUIRED]** At your DNS host, add the records Render shows:
 
-| Type | Name | Value (example — use Vercel's exact values) |
-|------|------|-----------------------------------------------|
-| A | `@` | `76.76.21.21` (Vercel apex IP — confirm in dashboard) |
-| CNAME | `www` | `cname.vercel-dns.com` (confirm in dashboard) |
+| Type | Name | Value |
+|------|------|-------|
+| A / ALIAS / CNAME | `@` | Use the exact Render custom-domain target for your DNS provider |
+| CNAME | `www` | Use the exact Render custom-domain target |
 
-Or CNAME flattening / ALIAS if your DNS supports it for apex.
-
-- [ ] Wait for TLS certificate issuance (Vercel automatic).
+- [ ] Wait for TLS certificate issuance from Render.
 - [ ] Verify `https://YOUR_DOMAIN` resolves (after you deploy — this checklist does not deploy for you).
 
 ---
@@ -202,7 +204,7 @@ Additive files (APPLY extracts them):
 |------|------|
 | `public/robots.txt` | Allow public pages; Disallow `/admin`, `/api`, private account routes |
 | `app/sitemap.ts` | `/`, `/tell`, `/sign-in`, `/create-account` only (no admin; no dynamic stories) |
-| `lib/site.ts` | `SITE_NAME`, `getSiteUrl()` from `NEXT_PUBLIC_SITE_URL` \|\| `VERCEL_URL` \|\| localhost |
+| `lib/site.ts` | `SITE_NAME`, `getSiteUrl()` from `NEXT_PUBLIC_SITE_URL` \|\| `RENDER_EXTERNAL_URL` \|\| localhost |
 | `lib/site-metadata.ts` | Optional `buildRootMetadata()` for title/description/openGraph |
 
 - [ ] After `NEXT_PUBLIC_SITE_URL` is set, hit `/sitemap.xml` on a deployed URL and confirm origins.
@@ -213,7 +215,7 @@ Additive files (APPLY extracts them):
 
 ## K. Build & deploy (you run — agents must not invent credentials)
 
-- [ ] **[USER ACTION REQUIRED]** Merge production-prep branch; push to the branch Vercel watches **or** `vercel --prod` from your machine with your login.
+- [ ] **[USER ACTION REQUIRED]** Merge the production branch, then deploy the Render Blueprint/service from the connected repository.
 - [ ] Watch build logs for env / TypeScript errors.
 - [ ] This document does **not** mean the app is live until you complete deploy + DNS.
 
@@ -251,7 +253,7 @@ Additive files (APPLY extracts them):
 
 If a production deploy misbehaves:
 
-1. **Vercel:** Promote previous Deployment (Deployments -> ... -> Promote to Production) or redeploy last known-good commit.
+1. **Render:** Roll back to a previous successful deploy from the service's Events/Deploys view, or redeploy the last known-good commit.
 2. **DNS:** Usually unchanged; do not flip DNS unless the domain was pointed incorrectly.
 3. **Env:** Revert bad env var edits and redeploy.
 4. **SQL:** Prefer forward-fix migrations; do not casually drop `is_admin` / `storage_provider` / avatar columns if data exists. Keep a SQL backup/export before risky schema changes.
