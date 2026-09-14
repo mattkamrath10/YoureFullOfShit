@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminPushAlerts } from "@/components/admin/AdminPushAlerts";
 import { ModerationDashboard } from "@/components/ModerationDashboard";
 import { getModerationQueue, requireAdmin } from "@/lib/stories-admin";
 
@@ -53,6 +54,7 @@ export default async function AdminStoriesPage({
           for the author. Comments: restore or remove reported / pending items.
         </p>
       </section>
+      <AdminPushAlerts />
       <ModerationDashboard
         initialStories={stories}
         highlightStoryId={highlightStoryId}
