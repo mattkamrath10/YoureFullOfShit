@@ -40,3 +40,23 @@ input,
 textarea {
   font: inherit;
 }
+
+/* YFOS: seamless category carousel (5.5s for one unique pass = translate -50%) */
+@keyframes yfos-category-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-yfos-category-marquee {
+  animation: yfos-category-marquee 5.5s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-yfos-category-marquee {
+    animation: none;
+  }
+}

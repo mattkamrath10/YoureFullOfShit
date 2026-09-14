@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { StoryCard } from "@/components/StoryCard";
+import { CategoryCarousel } from "@/components/home/CategoryCarousel";
 import type { Category, Story } from "@/types/database";
 
 type FilterId = "most-recent" | string;
@@ -136,25 +137,11 @@ export function DiscoverHome({
           />
         </div>
 
-        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {chips.map((chip) => {
-            const active = filter === chip.id;
-            return (
-              <button
-                key={chip.id}
-                type="button"
-                onClick={() => setFilter(chip.id)}
-                className={`shrink-0 rounded-full px-3.5 py-2 text-[11px] font-black uppercase tracking-wide transition sm:px-4 sm:text-xs ${
-                  active
-                    ? "border border-orange-400 bg-orange-500/15 text-white shadow-[0_0_20px_rgba(249,115,22,0.35)]"
-                    : "border border-white/10 bg-transparent text-zinc-500 hover:border-orange-400/30 hover:text-zinc-300"
-                }`}
-              >
-                {chip.label}
-              </button>
-            );
-          })}
-        </div>
+        <CategoryCarousel
+          chips={chips}
+          activeId={filter}
+          onSelect={setFilter}
+        />
 
         <h2 className="pt-1 text-center text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">
           {filter === "most-recent"
