@@ -2,15 +2,20 @@ import type { Story } from "@/types/database";
 import type { StoryMediaView } from "@/lib/stories";
 import { groupMediaViews } from "@/lib/stories";
 import { StoryNarrator } from "@/components/StoryNarrator";
+import { StoryDeleteButton } from "@/components/StoryDeleteButton";
 import { StoryActions } from "@/components/social/StoryActions";
 import { CommentSection } from "@/components/social/CommentSection";
 
 export function StoryDetail({
   story,
   media,
+  canDelete = false,
+  deleteRedirect,
 }: {
   story: Story;
   media: StoryMediaView[];
+  canDelete?: boolean;
+  deleteRedirect?: string;
 }) {
   const category = story.categories?.name ?? "Uncategorized";
   const teller = story.is_anonymous
@@ -166,6 +171,12 @@ export function StoryDetail({
         initialLikeCount={story.like_count ?? 0}
         initialCommentCount={story.comment_count ?? 0}
       />
+
+      {canDelete && (
+        <div className="flex justify-center">
+          <StoryDeleteButton storyId={story.id} redirectTo={deleteRedirect} />
+        </div>
+      )}
 
       <CommentSection storyId={story.id} />
     </article>
