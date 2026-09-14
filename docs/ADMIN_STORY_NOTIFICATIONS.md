@@ -14,15 +14,15 @@
 ## One-time config (you)
 1. Create a Resend account and API key.
 2. Verify a sending domain (or use Resend’s test `onboarding@resend.dev` only for sandbox).
-3. In Vercel (and `.env.local`), set **server-only** vars (never `NEXT_PUBLIC_`):
+3. In Render (and `.env.local`), set **server-only** vars (never `NEXT_PUBLIC_`):
    - `RESEND_API_KEY`
    - `RESEND_FROM_EMAIL` (e.g. `YFOS Moderation <moderation@yourdomain.com>`)
    - `SUPABASE_SERVICE_ROLE_KEY` (Supabase → Project Settings → API → service_role)
    - Optional fallback: `ADMIN_NOTIFY_EMAIL` (comma-separated) if Auth email lookup fails
-4. Confirm `NEXT_PUBLIC_SITE_URL=https://youre-full-of-shit.vercel.app` (or your custom domain) so Review links are correct.
+4. Set `NEXT_PUBLIC_SITE_URL` to the canonical Render URL or custom domain (for example, `https://YOUR-SERVICE.onrender.com`) so Review links are correct.
 5. Run the SQL migration in Supabase SQL Editor:
    `supabase/migrations/20260914_admin_story_notifications.sql`
-6. Redeploy Vercel after env vars are saved.
+6. Deploy or redeploy the Render service after env vars are saved.
 
 ## Smoke test
 1. Submit a guest or free-account story → pending queue.
