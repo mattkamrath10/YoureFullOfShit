@@ -18,7 +18,6 @@ export function CategoryCarousel({
   activeId: string;
   onSelect: (id: string) => void;
 }) {
-  const trackRef = useRef<HTMLDivElement>(null);
   const [paused, setPaused] = useState(false);
   const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -29,7 +28,7 @@ export function CategoryCarousel({
 
   const scheduleResume = useCallback(() => {
     if (resumeTimer.current) clearTimeout(resumeTimer.current);
-    resumeTimer.current = setTimeout(() => setPaused(false), 2200);
+    resumeTimer.current = setTimeout(() => setPaused(false), 1800);
   }, []);
 
   useEffect(() => {
@@ -38,25 +37,23 @@ export function CategoryCarousel({
     };
   }, []);
 
-  // Two identical sequences for -50% seamless loop
   const loop = [...chips, ...chips];
 
   return (
     <div
       className="relative -mx-1 overflow-hidden px-1"
-      onMouseEnter={pause}
+      onPointerDown={pause}
+      onPointerUp={scheduleResume}
+      onPointerCancel={scheduleResume}
       onMouseLeave={scheduleResume}
-      onTouchStart={pause}
-      onTouchEnd={scheduleResume}
     >
+      {/* IMPORTANT: use the plain globals.css class name — do NOT prefix with
+          Tailwind motion-safe: (that prevents .animate-yfos-category-marquee
+          from matching). Reduced-motion is handled in globals.css. */}
       <div
-        ref={trackRef}
-        className={`flex w-max gap-2 motion-safe:animate-yfos-category-marquee ${
+        className={`flex w-max gap-2 animate-yfos-category-marquee ${
           paused ? "[animation-play-state:paused]" : ""
         }`}
-        style={{
-          // Fallback if Tailwind animation utility missing — CSS class in globals
-        }}
       >
         {loop.map((chip, i) => {
           const active = activeId === chip.id;
