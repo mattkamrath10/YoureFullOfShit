@@ -113,6 +113,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <main className="relative mx-auto max-w-3xl px-4 pb-16 pt-5 sm:max-w-5xl sm:px-6 lg:max-w-6xl">
         {children}
       </main>
+      <footer className="relative border-t border-amber-400/10 px-4 py-8 text-center text-xs text-zinc-500">
+        <nav className="flex flex-wrap justify-center gap-x-5 gap-y-3" aria-label="Legal and support">
+          <Link href="/privacy" className="transition hover:text-amber-200">Privacy</Link>
+          <Link href="/terms" className="transition hover:text-amber-200">Terms</Link>
+          <Link href="/community-guidelines" className="transition hover:text-amber-200">Community Guidelines</Link>
+          <Link href="/support" className="transition hover:text-amber-200">Support</Link>
+        </nav>
+      </footer>
     </div>
   );
 }

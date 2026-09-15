@@ -127,6 +127,13 @@ export function AccountPanel() {
         {busy ? "Signing out…" : "Sign out"}
       </button>
 
+      <Link
+        href="/account/delete"
+        className="block text-center text-sm font-semibold text-rose-300 hover:text-rose-200"
+      >
+        Delete account
+      </Link>
+
       <p className="text-center text-sm text-zinc-500">
         <Link href="/my-stories" className={authLinkClass}>
           My Stories
