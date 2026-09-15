@@ -45,17 +45,16 @@ export function StoryCard({
   return (
     <Link
       href={`/story/${story.id}`}
-      className={`group relative flex items-stretch gap-3 overflow-hidden rounded-3xl border bg-[#070b14]/90 p-4 shadow-[0_12px_30px_rgba(0,0,0,0.22)] transition duration-200 sm:gap-4 sm:p-5 ${
+      className={`group relative flex items-stretch gap-3 rounded-3xl border bg-zinc-950/80 p-4 transition sm:gap-4 sm:p-5 ${
         emphasized
-          ? "border-orange-300/55 shadow-[0_0_36px_rgba(249,115,22,0.16),0_12px_30px_rgba(0,0,0,0.26)]"
-          : "border-amber-400/20 hover:-translate-y-0.5 hover:border-orange-300/50 hover:bg-[#0a101d]"
+          ? "border-amber-400/50 shadow-[0_0_36px_rgba(245,185,66,0.18)]"
+          : "border-amber-400/20 hover:border-amber-300/45 hover:bg-zinc-900/90"
       }`}
     >
-      <span className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-amber-300/35 to-transparent" />
       <div className="min-w-0 flex-1">
         {/* Top-left category · top-right type */}
         <div className="mb-3 flex items-start justify-between gap-3">
-          <span className="max-w-[58%] truncate rounded-full border border-orange-300/40 bg-orange-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-orange-200 sm:text-[11px]">
+          <span className="max-w-[58%] truncate rounded-full border border-amber-400/35 bg-amber-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-200 sm:text-[11px]">
             {category}
           </span>
           <span
@@ -97,7 +96,7 @@ export function StoryCard({
       </div>
 
       <span
-        className="flex shrink-0 items-center self-center text-2xl font-light text-zinc-400 transition group-hover:text-orange-300"
+        className="flex shrink-0 items-center self-center text-2xl font-light text-zinc-400 transition group-hover:text-amber-300"
         aria-hidden
       >
         ›

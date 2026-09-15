@@ -1,5 +1,6 @@
 import "server-only";
 import { Resend } from "resend";
+import { sendAdminPushNotifications } from "@/lib/admin/send-push-notifications";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getSiteUrl } from "@/lib/site";
 import {
@@ -77,15 +78,6 @@ async function resolveAdminEmails(
 export async function notifyAdminsOfNewStory(
   storyId: string,
 ): Promise<NotifyNewStoryResult> {
-  const resendKey = process.env.RESEND_API_KEY?.trim();
-  const from = process.env.RESEND_FROM_EMAIL?.trim();
-  if (!resendKey || !from) {
-    console.error(
-      "[admin-notify] RESEND_API_KEY or RESEND_FROM_EMAIL not configured; skipping email.",
-    );
-    return { ok: false, error: "resend_not_configured", storyId };
-  }
-
   let service: ReturnType<typeof createServiceClient>;
   try {
     service = createServiceClient();
@@ -94,7 +86,7 @@ export async function notifyAdminsOfNewStory(
     return { ok: false, error: "service_role_missing", storyId };
   }
 
-  // Dedupe claim (unique story_id).
+  // Dedupe claim (unique story_id) covers all alert channels.
   const { error: claimErr } = await service
     .from("admin_story_notifications")
     .insert({
@@ -174,18 +166,6 @@ export async function notifyAdminsOfNewStory(
         ? "Audio"
         : "Text";
 
-  const recipients = await resolveAdminEmails(service);
-  if (recipients.length === 0) {
-    console.error(
-      "[admin-notify] no admin emails resolved (profiles.is_admin + ADMIN_NOTIFY_EMAIL).",
-    );
-    await service
-      .from("admin_story_notifications")
-      .update({ status: "failed", error: "no_admin_recipients" })
-      .eq("story_id", storyId);
-    return { ok: false, error: "no_admin_recipients", storyId };
-  }
-
   const when = (() => {
     try {
       return new Date(story.created_at).toLocaleString("en-US", {
@@ -202,8 +182,53 @@ export async function notifyAdminsOfNewStory(
     .trim()
     .slice(0, 280);
   const reviewUrl = `${getSiteUrl()}/admin/stories?story=${encodeURIComponent(storyId)}`;
+  const push = await sendAdminPushNotifications(service, {
+    title: "New story waiting for review",
+    body: String(story.title).trim() || "A new story is pending your review.",
+    url: reviewUrl,
+    tag: `yfosh-story-${storyId}`,
+  });
 
-  const subject = "New Story Submitted — You're Full of Shit";
+  if (push.allDelivered) {
+    console.info("[admin-notify] Web Push delivered", {
+      storyId,
+      toCount: push.delivered,
+    });
+    await service
+      .from("admin_story_notifications")
+      .update({ status: "sent", error: null })
+      .eq("story_id", storyId);
+    return { ok: true, sent: true, storyId };
+  }
+
+  // Email remains the fallback for any administrator without a working
+  // subscription, as well as when VAPID or Web Push is unavailable.
+  const resendKey = process.env.RESEND_API_KEY?.trim();
+  const from = process.env.RESEND_FROM_EMAIL?.trim();
+  if (!resendKey || !from) {
+    console.error(
+      "[admin-notify] Web Push incomplete and Resend is not configured.",
+    );
+    await service
+      .from("admin_story_notifications")
+      .update({ status: "failed", error: "push_incomplete_and_resend_not_configured" })
+      .eq("story_id", storyId);
+    return { ok: false, error: "resend_not_configured", storyId };
+  }
+
+  const recipients = await resolveAdminEmails(service);
+  if (recipients.length === 0) {
+    console.error(
+      "[admin-notify] no admin emails resolved (profiles.is_admin + ADMIN_NOTIFY_EMAIL).",
+    );
+    await service
+      .from("admin_story_notifications")
+      .update({ status: "failed", error: "no_admin_recipients" })
+      .eq("story_id", storyId);
+    return { ok: false, error: "no_admin_recipients", storyId };
+  }
+
+  const subject = "New Story Submitted — Last Storyteller";
   const text = [
     "NEW STORY WAITING FOR REVIEW",
     "",
@@ -225,7 +250,7 @@ export async function notifyAdminsOfNewStory(
 <body style="margin:0;padding:24px;background:#0a0a0a;color:#e4e4e7;font-family:system-ui,-apple-system,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#18181b;border:1px solid #3f3f46;border-radius:16px;">
     <tr><td style="padding:28px 24px;">
-      <p style="margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:0.12em;color:#fb923c;text-transform:uppercase;">You're Full of Shit</p>
+      <p style="margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:0.12em;color:#f5b942;text-transform:uppercase;">Last Storyteller</p>
       <h1 style="margin:0 0 20px;font-size:22px;line-height:1.3;color:#fff;">NEW STORY WAITING FOR REVIEW</h1>
       <p style="margin:0 0 8px;"><strong style="color:#a1a1aa;">Title:</strong> ${escapeHtml(String(story.title))}</p>
       <p style="margin:0 0 8px;"><strong style="color:#a1a1aa;">Category:</strong> ${escapeHtml(category)}</p>
@@ -237,7 +262,7 @@ export async function notifyAdminsOfNewStory(
           ? `<p style="margin:0 0 20px;padding:12px 14px;background:#09090b;border-radius:12px;color:#d4d4d8;font-size:14px;line-height:1.5;">${escapeHtml(excerpt)}</p>`
           : ""
       }
-      <a href="${escapeHtml(reviewUrl)}" style="display:inline-block;padding:12px 22px;background:#f97316;color:#000;font-weight:800;text-decoration:none;border-radius:999px;text-transform:uppercase;letter-spacing:0.04em;">Review Story</a>
+      <a href="${escapeHtml(reviewUrl)}" style="display:inline-block;padding:12px 22px;background:#f5b942;color:#000;font-weight:800;text-decoration:none;border-radius:999px;text-transform:uppercase;letter-spacing:0.04em;">Review Story</a>
     </td></tr>
   </table>
 </body>

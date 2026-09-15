@@ -1,6 +1,8 @@
-# Phase 2 — manual configuration required before live large uploads
+# Last Storyteller Phase 2 — manual configuration required before live large uploads
 
 Code is ready. These steps must be done in Cloudflare + Supabase dashboards (not via chat secrets).
+
+Do **not** recreate or rename the existing R2 bucket. The example name below is historical; keep the live `R2_BUCKET_NAME` already set in Render.
 
 ## 1) Cloudflare R2
 1. Create bucket (e.g. `yfos-story-videos`), **private** (not public).
@@ -16,7 +18,7 @@ R2_ACCESS_KEY_ID=...
 R2_SECRET_ACCESS_KEY=...
 R2_BUCKET_NAME=yfos-story-videos
 # optional:
-# R2_PUBLIC_URL=https://media.yourdomain.com
+# R2_PUBLIC_URL=https://media.laststoryteller.com
 # R2_MAX_VIDEO_BYTES=1073741824
 ```
 

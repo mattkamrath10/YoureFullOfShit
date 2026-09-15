@@ -4,8 +4,8 @@ import { SITE_DESCRIPTION, SITE_NAME, getSiteUrl } from "@/lib/site";
 /** Public path for the 1200x630 social share image (do not use signed/private URLs). */
 export const OG_SHARE_PATH = "/og-share.png";
 
-/** Square master brand icon (public). */
-export const BRAND_ICON_PATH = "/yfos-icon.png";
+/** Square master brand icon from app/icon.png. */
+export const BRAND_ICON_PATH = "/icon";
 
 export function absoluteUrl(path: string): string {
   const base = getSiteUrl().replace(/\/$/, "");
@@ -33,6 +33,7 @@ export function buildRootMetadata(): Metadata {
       template: `%s · ${SITE_NAME}`,
     },
     description: SITE_DESCRIPTION,
+    applicationName: SITE_NAME,
     metadataBase: new URL(url),
     openGraph: {
       title: SITE_NAME,
@@ -59,9 +60,8 @@ export function buildRootMetadata(): Metadata {
     icons: {
       icon: [
         { url: BRAND_ICON_PATH, type: "image/png" },
-        { url: "/favicon.ico", sizes: "any" },
       ],
-      apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+      apple: [{ url: "/apple-icon", sizes: "512x512", type: "image/png" }],
     },
   };
 }

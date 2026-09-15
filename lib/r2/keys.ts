@@ -3,7 +3,7 @@ import "server-only";
 import { randomUUID } from "crypto";
 
 /**
- * Object key design for YFOS R2 videos.
+ * Object key design for Last Storyteller R2 videos.
  *
  * stories/{storyId}/{ownerId}/{uuid}/{safeFileName}
  *

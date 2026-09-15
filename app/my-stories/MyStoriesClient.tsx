@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FreeAccountGate } from "@/components/auth/FreeAccountGate";
+import { StoryDeleteButton } from "@/components/StoryDeleteButton";
 
 export type MyStoryRow = {
   id: string;
@@ -67,34 +68,40 @@ export function MyStoriesClient({ stories }: { stories: MyStoryRow[] }) {
               const mediaCount = story.story_media?.length ?? 0;
               const date = new Date(story.created_at).toLocaleString();
               return (
-                <Link
+                <article
                   key={story.id}
-                  href={`/story/${story.id}`}
                   className="rounded-3xl border border-white/10 bg-zinc-900/60 p-4 transition hover:border-white/20"
                 >
-                  <div className="mb-2 flex flex-wrap justify-center gap-2 text-[11px] font-semibold uppercase tracking-wide">
-                    <span className="rounded-full bg-white/10 px-2.5 py-1 text-zinc-200">
-                      {story.categories?.name ?? "Uncategorized"}
-                    </span>
-                    <span
-                      className={`rounded-full border px-2.5 py-1 ${statusTone(status)}`}
-                    >
-                      {STATUS_LABELS[status] ?? status}
-                    </span>
-                    <span className="rounded-full bg-white/5 px-2.5 py-1 text-zinc-400">
-                      {mediaCount} media
-                    </span>
+                  <Link href={`/story/${story.id}`} className="block">
+                    <div className="mb-2 flex flex-wrap justify-center gap-2 text-[11px] font-semibold uppercase tracking-wide">
+                      <span className="rounded-full bg-white/10 px-2.5 py-1 text-zinc-200">
+                        {story.categories?.name ?? "Uncategorized"}
+                      </span>
+                      <span
+                        className={`rounded-full border px-2.5 py-1 ${statusTone(status)}`}
+                      >
+                        {STATUS_LABELS[status] ?? status}
+                      </span>
+                      <span className="rounded-full bg-white/5 px-2.5 py-1 text-zinc-400">
+                        {mediaCount} media
+                      </span>
+                    </div>
+                    <h2 className="text-center text-lg font-black text-white">
+                      {story.title}
+                    </h2>
+                    {status === "rejected" && story.rejection_reason ? (
+                      <p className="mt-2 rounded-2xl border border-rose-400/20 bg-rose-500/5 px-3 py-2 text-center text-xs text-rose-100">
+                        {story.rejection_reason}
+                      </p>
+                    ) : null}
+                    <p className="mt-2 text-center text-xs text-zinc-500">{date}</p>
+                  </Link>
+                  <div className="mt-3 flex justify-center">
+                    <StoryDeleteButton
+                      storyId={story.id}
+                    />
                   </div>
-                  <h2 className="text-center text-lg font-black text-white">
-                    {story.title}
-                  </h2>
-                  {status === "rejected" && story.rejection_reason ? (
-                    <p className="mt-2 rounded-2xl border border-rose-400/20 bg-rose-500/5 px-3 py-2 text-center text-xs text-rose-100">
-                      {story.rejection_reason}
-                    </p>
-                  ) : null}
-                  <p className="mt-2 text-center text-xs text-zinc-500">{date}</p>
-                </Link>
+                </article>
               );
             })}
           </div>

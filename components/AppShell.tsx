@@ -9,52 +9,58 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-dvh bg-[#030914] text-zinc-100">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_50%_-10%,_rgba(180,83,9,0.14),_transparent_34%),radial-gradient(ellipse_at_50%_38%,_rgba(11,32,66,0.34),_transparent_48%)]" />
-      <header className="sticky top-0 z-40 border-b border-amber-400/20 bg-[#040812]/85 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
+    <div className="min-h-dvh bg-[#020812] text-zinc-100">
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="ls-stars absolute inset-0 opacity-80" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(245,185,66,0.16),transparent_42%),radial-gradient(ellipse_at_center,rgba(12,42,72,0.35),transparent_58%)]" />
+      </div>
+      <header className="sticky top-0 z-40 border-b border-amber-400/20 bg-[#020812]/80 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <Link href="/" className="group flex min-w-0 items-center gap-2.5">
             <Image
-              src="/last-storyteller-book.png"
+              src="/last-storyteller-logo.png"
               alt="Last Storyteller"
               width={40}
               height={40}
-              className="h-9 w-9 shrink-0 rounded-xl shadow-[0_0_24px_rgba(249,115,22,0.45)]"
+              className="h-9 w-9 shrink-0 rounded-xl shadow-[0_0_24px_rgba(245,185,66,0.45)] sm:h-10 sm:w-10"
               priority
             />
-            <p className="truncate font-serif text-sm font-bold uppercase tracking-[0.18em] text-amber-100 sm:text-base">
-              Last <span className="text-amber-400">Storyteller</span>
-            </p>
+            <span className="flex min-w-0 flex-col leading-none">
+              <span className="truncate font-serif text-[15px] font-bold tracking-[0.22em] text-amber-100 sm:text-base">
+                LAST
+              </span>
+              <span className="truncate text-[9px] font-semibold uppercase tracking-[0.28em] text-amber-400/90 sm:text-[10px]">
+                Storyteller
+              </span>
+            </span>
           </Link>
 
-          {/* Desktop nav */}
           <nav className="hidden items-center gap-2 md:flex">
             <Link
               href="/#feed"
-              className="rounded-full border border-amber-400/20 bg-white/[0.035] px-3.5 py-1.5 text-xs font-semibold text-zinc-200 transition hover:border-amber-300/45 hover:bg-white/[0.08]"
+              className="rounded-full border border-amber-400/25 bg-white/5 px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:bg-amber-400/10"
             >
               Search
             </Link>
             <Link
               href="/my-stories"
-              className="rounded-full border border-amber-400/20 bg-white/[0.035] px-3.5 py-1.5 text-xs font-semibold text-zinc-200 transition hover:border-amber-300/45 hover:bg-white/[0.08]"
+              className="rounded-full border border-amber-400/25 bg-white/5 px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:bg-amber-400/10"
             >
               My Stories
             </Link>
             <AuthNav />
             <Link
               href="/tell"
-              className="rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-1.5 text-xs font-black uppercase tracking-wide text-white shadow-[0_0_20px_rgba(249,115,22,0.35)] transition hover:-translate-y-px hover:from-amber-400 hover:to-orange-400"
+              className="rounded-full bg-gradient-to-r from-amber-500 to-orange-400 px-3 py-1.5 text-xs font-black uppercase tracking-wide text-black shadow-[0_0_20px_rgba(245,185,66,0.35)] hover:from-amber-400 hover:to-orange-300"
             >
               Tell Your Story
             </Link>
           </nav>
 
-          {/* Mobile: search + menu */}
           <div className="flex items-center gap-1 md:hidden">
             <Link
               href="/#feed"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full text-orange-400"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full text-amber-300"
               aria-label="Search stories"
             >
               <span className="text-lg" aria-hidden>
@@ -63,7 +69,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
             <button
               type="button"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full text-orange-400"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full text-amber-300"
               aria-expanded={menuOpen}
               aria-label="Open menu"
               onClick={() => setMenuOpen((v) => !v)}
@@ -78,8 +84,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         {menuOpen ? (
-          <div className="border-t border-orange-500/15 bg-[#040812]/95 px-4 py-3 md:hidden">
-            <nav className="mx-auto flex max-w-6xl flex-col gap-2">
+          <div className="border-t border-amber-400/15 bg-[#020812]/95 px-4 py-3 md:hidden">
+            <nav className="mx-auto flex max-w-5xl flex-col gap-2">
               <Link
                 href="/my-stories"
                 onClick={() => setMenuOpen(false)}
@@ -93,7 +99,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Link
                 href="/tell"
                 onClick={() => setMenuOpen(false)}
-                className="rounded-2xl bg-orange-500 px-4 py-3 text-center text-sm font-black uppercase tracking-wide text-black"
+                className="rounded-2xl bg-gradient-to-r from-amber-500 to-orange-400 px-4 py-3 text-center text-sm font-black uppercase tracking-wide text-black"
               >
                 Tell Your Story
               </Link>
@@ -102,7 +108,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         ) : null}
       </header>
 
-      <main className="relative mx-auto max-w-3xl px-4 pb-16 pt-5 sm:max-w-5xl sm:px-6 lg:max-w-6xl">
+      <main className="relative mx-auto max-w-3xl px-4 pb-16 pt-6 sm:max-w-4xl sm:px-6 lg:max-w-5xl">
         {children}
       </main>
     </div>
