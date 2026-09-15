@@ -70,6 +70,7 @@ export function DiscoverHome({
             <span className="text-orange-400">Discover</span> other
             people&apos;s stories
             <br className="hidden sm:block" /> and upload your own story.
+            </h1>
           </div>
 
           <div className="hero-artwork mx-auto mt-5 w-[min(86vw,34rem)] sm:mt-7">
