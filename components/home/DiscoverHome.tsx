@@ -76,8 +76,8 @@ export function DiscoverHome({
           <div className="hero-artwork mx-auto mt-5 w-[min(86vw,34rem)] sm:mt-7">
             <div className="hero-artwork__atmosphere" aria-hidden />
             <Image
-              src="/yfos-icon.png"
-              alt="You're Full of Shit mascot"
+              src="/last-storyteller-book.png"
+              alt="Last Storyteller open book and story path"
               width={640}
               height={640}
               priority

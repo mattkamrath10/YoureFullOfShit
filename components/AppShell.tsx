@@ -15,19 +15,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
           <Link href="/" className="group flex min-w-0 items-center gap-2.5">
             <Image
-              src="/yfos-icon.png"
-              alt="You're Full of Shit"
+              src="/last-storyteller-book.png"
+              alt="Last Storyteller"
               width={40}
               height={40}
               className="h-9 w-9 shrink-0 rounded-xl shadow-[0_0_24px_rgba(249,115,22,0.45)]"
               priority
             />
-            <p className="truncate text-sm font-black tracking-tight text-white sm:text-base">
-              You&apos;re Full{" "}
-              <span className="font-serif text-sm font-normal italic text-orange-400 sm:text-base">
-                of
-              </span>{" "}
-              Shit
+            <p className="truncate font-serif text-sm font-bold uppercase tracking-[0.18em] text-amber-100 sm:text-base">
+              Last <span className="text-amber-400">Storyteller</span>
             </p>
           </Link>
 
