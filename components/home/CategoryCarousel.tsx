@@ -119,7 +119,6 @@ export function CategoryCarousel({
         onTransitionEnd={resetLoop}
       >
         {items.map((chip, itemIndex) => {
-          const chipIndex = itemIndex % chips.length;
           const active = activeId === chip.id;
           return (
             <button
