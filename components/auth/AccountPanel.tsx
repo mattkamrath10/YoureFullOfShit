@@ -117,6 +117,12 @@ export function AccountPanel() {
           Admin services
         </Link>
       ) : null}
+      <Link
+        href="/plus"
+        className="flex w-full items-center justify-center rounded-full border border-amber-400/40 bg-amber-500/10 px-5 py-3 text-sm font-black uppercase tracking-wide text-amber-200 hover:bg-amber-500/20"
+      >
+        Last Storyteller Plus
+      </Link>
 
       <button
         type="button"
