@@ -1,10 +1,8 @@
 "use client";
 
 import {
-  type TransitionEvent,
   useCallback,
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
   useSyncExternalStore,
@@ -33,15 +31,24 @@ export function CategoryCarousel({
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const indexRef = useRef(0);
-  const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  const offsetRef = useRef(0);
   const prefersReducedMotion = useSyncExternalStore(
     subscribeToReducedMotion,
     getReducedMotionPreference,
     () => false,
   );
   const items = [...chips, ...chips];
+
+  const applyOffset = useCallback(() => {
+    const track = trackRef.current;
+    if (!track || chips.length === 0) return;
+    const loopWidth = track.scrollWidth / 2;
+    if (!loopWidth) return;
+    offsetRef.current =
+      ((offsetRef.current % loopWidth) + loopWidth) % loopWidth;
+    track.style.transform = `translate3d(-${offsetRef.current}px, 0, 0)`;
+  }, [chips.length]);
 
   const pause = useCallback(() => {
     setPaused(true);
@@ -53,28 +60,35 @@ export function CategoryCarousel({
     resumeTimer.current = setTimeout(() => setPaused(false), 2200);
   }, []);
 
+  const resumeImmediately = useCallback(() => {
+    if (resumeTimer.current) clearTimeout(resumeTimer.current);
+    setPaused(false);
+  }, []);
+
   const select = useCallback(
-    (chip: CategoryChip, nextIndex: number) => {
+    (chip: CategoryChip) => {
       pause();
       onSelect(chip.id);
-      const normalizedIndex = nextIndex % chips.length;
-      indexRef.current = normalizedIndex;
-      setIndex(normalizedIndex);
       resume();
     },
-    [chips.length, onSelect, pause, resume],
+    [onSelect, pause, resume],
   );
 
   useEffect(() => {
     if (paused || prefersReducedMotion || chips.length < 2) return;
-    const timer = window.setInterval(() => {
-      const nextIndex = indexRef.current + 1;
-      indexRef.current = nextIndex;
-      onSelect(chips[nextIndex % chips.length]!.id);
-      setIndex(nextIndex);
-    }, 3000);
-    return () => window.clearInterval(timer);
-  }, [chips, onSelect, paused, prefersReducedMotion]);
+    let frame = 0;
+    let previous = performance.now();
+    const pixelsPerMillisecond = 0.035;
+
+    const animate = (now: number) => {
+      offsetRef.current += (now - previous) * pixelsPerMillisecond;
+      previous = now;
+      applyOffset();
+      frame = window.requestAnimationFrame(animate);
+    };
+    frame = window.requestAnimationFrame(animate);
+    return () => window.cancelAnimationFrame(frame);
+  }, [applyOffset, chips.length, paused, prefersReducedMotion]);
 
   useEffect(() => {
     return () => {
@@ -82,41 +96,30 @@ export function CategoryCarousel({
     };
   }, []);
 
-  useLayoutEffect(() => {
-    const track = trackRef.current;
-    const item = track?.querySelector<HTMLElement>(`[data-carousel-index="${index}"]`);
-    if (!track || !item) return;
-    track.style.transform = `translate3d(-${item.offsetLeft}px, 0, 0)`;
-  }, [index]);
-
-  const resetLoop = useCallback((event: TransitionEvent<HTMLDivElement>) => {
-    if (event.target !== event.currentTarget || event.propertyName !== "transform") {
-      return;
-    }
-    if (index !== chips.length) return;
-    const track = trackRef.current;
-    if (!track) return;
-    track.style.transition = "none";
-    track.style.transform = "translate3d(0, 0, 0)";
-    window.requestAnimationFrame(() => {
-      track.style.transition = "";
-      indexRef.current = 0;
-      setIndex(0);
-    });
-  }, [chips.length, index]);
+  const nudge = useCallback(
+    (direction: -1 | 1) => {
+      pause();
+      const track = trackRef.current;
+      const distance = track?.parentElement?.clientWidth ?? 240;
+      offsetRef.current += direction * distance * 0.65;
+      applyOffset();
+      resume();
+    },
+    [applyOffset, pause, resume],
+  );
 
   return (
     <div
       className="relative -mx-4 overflow-hidden px-4 pb-2 sm:mx-0 sm:px-0"
+      onMouseEnter={pause}
+      onMouseLeave={resumeImmediately}
       onPointerDown={pause}
       onPointerUp={resume}
       onPointerCancel={resume}
-      onMouseLeave={resume}
     >
       <div
         ref={trackRef}
-        className="flex w-max gap-2 transition-transform duration-700 ease-out motion-reduce:transition-none"
-        onTransitionEnd={resetLoop}
+        className="flex w-max gap-2 will-change-transform"
       >
         {items.map((chip, itemIndex) => {
           const active = activeId === chip.id;
@@ -124,8 +127,7 @@ export function CategoryCarousel({
             <button
               key={`${chip.id}-${itemIndex}`}
               type="button"
-              data-carousel-index={itemIndex}
-              onClick={() => select(chip, itemIndex)}
+              onClick={() => select(chip)}
               onFocus={pause}
               onBlur={resume}
               className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-[11px] font-black uppercase tracking-wide transition duration-200 sm:text-xs ${
@@ -139,6 +141,26 @@ export function CategoryCarousel({
           );
         })}
       </div>
+      <button
+        type="button"
+        aria-label="Show previous categories"
+        onClick={() => nudge(-1)}
+        className="absolute inset-y-0 left-0 z-10 flex w-10 items-center justify-start bg-gradient-to-r from-[#030914] via-[#030914]/85 to-transparent text-xl text-amber-300 transition hover:text-amber-100 focus:outline-none focus-visible:text-amber-100 sm:w-12"
+      >
+        <span className="flex h-7 w-7 items-center justify-center rounded-full border border-amber-300/35 bg-[#090d16]/90 shadow-lg">
+          ‹
+        </span>
+      </button>
+      <button
+        type="button"
+        aria-label="Show next categories"
+        onClick={() => nudge(1)}
+        className="absolute inset-y-0 right-0 z-10 flex w-10 items-center justify-end bg-gradient-to-l from-[#030914] via-[#030914]/85 to-transparent text-xl text-amber-300 transition hover:text-amber-100 focus:outline-none focus-visible:text-amber-100 sm:w-12"
+      >
+        <span className="flex h-7 w-7 items-center justify-center rounded-full border border-amber-300/35 bg-[#090d16]/90 shadow-lg">
+          ›
+        </span>
+      </button>
     </div>
   );
 }
