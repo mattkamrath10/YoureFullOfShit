@@ -1,4 +1,4 @@
-# YFOS guest vs account vs admin access
+# Last Storyteller guest vs account vs admin access
 
 | Feature | Guest (signed out / anonymous) | Email account (FREE) | Admin |
 |---------|--------------------------------|----------------------|-------|

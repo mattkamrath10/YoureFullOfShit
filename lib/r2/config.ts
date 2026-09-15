@@ -1,7 +1,7 @@
 import "server-only";
 
 /**
- * Server-only R2 configuration for YFOS.
+ * Server-only R2 configuration for Last Storyteller.
  * Never import this module from Client Components.
  */
 

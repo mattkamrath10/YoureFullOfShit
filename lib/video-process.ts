@@ -3,7 +3,7 @@
 import { fetchFile, loadFFmpeg, terminateFFmpeg } from "@/lib/ffmpeg-client";
 
 /**
- * Additive Free-plan video prep for YFOS.
+ * Additive Free-plan video prep for Last Storyteller.
  * Compress toward ~45 MB; size-aware split fallback. Never uploads the original oversized file.
  * Uses single-threaded FFmpeg.wasm (no COOP/COEP / core-mt).
  */
@@ -428,7 +428,7 @@ export async function processVideoForUpload(
       onProgress?.({ phase: "cancelled", message: "Processing cancelled." });
       return { ok: false, error: "Processing cancelled.", cancelled: true };
     }
-    console.error("[YFOS video-process]", e);
+    console.error("[last-storyteller video-process]", e);
     onProgress?.({
       phase: "error",
       message: "Unable to prepare this video on this device.",

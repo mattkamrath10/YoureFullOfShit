@@ -1,4 +1,4 @@
-# YFOS Email/Password Auth (phase 1)
+# Last Storyteller Email/Password Auth (phase 1)
 
 ## Apply
 1. Copy `yfos-auth.tar.gz` + `APPLY_YFOS_AUTH.ps1` into the Next app root.

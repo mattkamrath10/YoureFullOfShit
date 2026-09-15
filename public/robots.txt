@@ -1,4 +1,4 @@
-# YFOS robots — public crawl; keep admin/API out of indexes
+# Last Storyteller robots — public crawl; keep admin/API out of indexes
 User-agent: *
 Allow: /
 Allow: /tell
@@ -15,6 +15,6 @@ Disallow: /forgot-password
 Disallow: /reset-password
 Disallow: /avatars
 
-# After go-live, set NEXT_PUBLIC_SITE_URL and prefer app/sitemap.ts
+# After go-live, set NEXT_PUBLIC_SITE_URL=https://laststoryteller.com
 # (Next serves /sitemap.xml). Optionally add:
-# Sitemap: https://YOUR_DOMAIN/sitemap.xml
+# Sitemap: https://laststoryteller.com/sitemap.xml

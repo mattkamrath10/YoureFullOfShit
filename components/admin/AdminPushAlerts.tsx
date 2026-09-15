@@ -141,19 +141,19 @@ export function AdminPushAlerts() {
   if (status === "unsupported") {
     return (
       <p className="text-sm text-zinc-400">
-        Phone alerts need a browser with Web Push support. On iPhone, add YFOS
-        to your Home Screen and open it from that icon first.
+        Phone alerts need a browser with Web Push support. On iPhone, add Last
+        Storyteller to your Home Screen and open it from that icon first.
       </p>
     );
   }
 
   return (
-    <section className="rounded-2xl border border-orange-400/30 bg-orange-500/10 p-4 text-left">
-      <p className="text-sm font-bold text-orange-100">Admin phone alerts</p>
+    <section className="rounded-2xl border border-amber-400/30 bg-amber-500/10 p-4 text-left">
+      <p className="text-sm font-bold text-amber-100">Admin phone alerts</p>
       <p className="mt-1 text-sm text-zinc-300">
         {standalone
           ? "This app is opened from the Home Screen."
-          : "For iPhone alerts, use Safari → Share → Add to Home Screen, then open YFOS from its icon."}
+          : "For iPhone alerts, use Safari → Share → Add to Home Screen, then open Last Storyteller from its icon."}
       </p>
       <div className="mt-3 flex flex-wrap items-center gap-3">
         {status === "enabled" ? (
@@ -170,7 +170,7 @@ export function AdminPushAlerts() {
             type="button"
             disabled={busy || status === "denied"}
             onClick={enable}
-            className="rounded-full bg-orange-500 px-4 py-2 text-sm font-black text-black disabled:opacity-50"
+            className="rounded-full bg-gradient-to-r from-amber-500 to-orange-400 px-4 py-2 text-sm font-black text-black disabled:opacity-50"
           >
             {busy ? "Enabling…" : "Enable phone alerts"}
           </button>

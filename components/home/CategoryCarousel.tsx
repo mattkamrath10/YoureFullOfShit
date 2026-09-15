@@ -48,10 +48,10 @@ export function CategoryCarousel({
       onMouseLeave={scheduleResume}
     >
       {/* IMPORTANT: use the plain globals.css class name — do NOT prefix with
-          Tailwind motion-safe: (that prevents .animate-yfos-category-marquee
+          Tailwind motion-safe: (that prevents .animate-ls-category-marquee
           from matching). Reduced-motion is handled in globals.css. */}
       <div
-        className={`flex w-max gap-2 animate-yfos-category-marquee ${
+        className={`flex w-max gap-2 animate-ls-category-marquee ${
           paused ? "[animation-play-state:paused]" : ""
         }`}
       >
@@ -70,8 +70,8 @@ export function CategoryCarousel({
               onBlur={scheduleResume}
               className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-2 text-[11px] font-black uppercase tracking-wide transition sm:px-4 sm:text-xs ${
                 active
-                  ? "border border-orange-400 bg-orange-500/15 text-white shadow-[0_0_20px_rgba(249,115,22,0.35)]"
-                  : "border border-white/10 bg-transparent text-zinc-500 hover:border-orange-400/30 hover:text-zinc-300"
+                  ? "border border-amber-400 bg-gradient-to-r from-amber-500 to-orange-400 text-black shadow-[0_0_20px_rgba(245,185,66,0.35)]"
+                  : "border border-white/10 bg-transparent text-zinc-500 hover:border-amber-400/40 hover:text-zinc-300"
               }`}
             >
               {chip.label}

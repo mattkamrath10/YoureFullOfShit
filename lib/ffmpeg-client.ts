@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Single client-side FFmpeg loader for YFOS.
+ * Single client-side FFmpeg loader for Last Storyteller.
  * Static package imports so Turbopack can resolve modules.
  * WASM core still loaded via toBlobURL (single-thread, no COOP/COEP).
  */

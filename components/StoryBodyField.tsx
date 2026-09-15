@@ -123,7 +123,7 @@ export function StoryBodyField({
     };
 
     recognition.onerror = (event) => {
-      console.error("[YFOS speech]", event.error);
+      console.error("[last-storyteller speech]", event.error);
       if (event.error === "not-allowed" || event.error === "service-not-allowed") {
         setSpeechError("Microphone access was denied. You can still type your story.");
       } else if (event.error === "no-speech") {
@@ -143,7 +143,7 @@ export function StoryBodyField({
       recognition.start();
       setListening(true);
     } catch (e) {
-      console.error("[YFOS speech start]", e);
+      console.error("[last-storyteller speech start]", e);
       setSpeechError("Could not start voice typing. You can type normally.");
       setListening(false);
     }

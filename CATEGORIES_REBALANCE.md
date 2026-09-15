@@ -1,4 +1,4 @@
-# YFOS category rebalance
+# Last Storyteller category rebalance
 
 ## Source of truth
 `public.categories` (Postgres). App loads via `getCategories()` — no hard-coded TS list.
