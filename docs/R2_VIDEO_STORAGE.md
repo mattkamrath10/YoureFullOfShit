@@ -1,4 +1,4 @@
-# Last Storyteller — Cloudflare R2 video storage (Phase 1)
+# Last Storyteller — Cloudflare R2 large-video storage
 
 ## Why
 Supabase Free caps **individual objects at 50 MB**. Client FFmpeg.wasm compress/split was a workaround and is fragile on phones/Turbopack. R2 stores large videos without upgrading Supabase.
@@ -7,17 +7,16 @@ Supabase Free caps **individual objects at 50 MB**. Client FFmpeg.wasm compress/
 - Auth, profiles, stories, categories, votes, moderation, RLS
 - `story_media` **metadata** (and existing Supabase Storage for images/PDFs/small videos)
 
-## What moves to R2 (Phase 2+)
+## What moves to R2
 - Large story **video bytes**
 - Object key / provider recorded on `story_media`
 
-## Phase 1 status (this PR/package)
-Foundation only:
+## Current upload flow
 - `lib/r2/*` server modules (`server-only`)
-- API stubs under `/api/r2/upload/{create,complete,abort}`
-- SQL migration **file created, not applied**
-- Types: optional `storage_provider`
-- **Not** wired to `/tell`, VideoRecorder, FFmpeg, or `uploadStoryMedia`
+- `/api/r2/upload/{create,complete,abort}` multipart control routes
+- `/tell` sends authenticated videos over 50 MB through R2 multipart upload
+- `story_media` records the R2 object key with `storage_provider='r2'`
+- Images, PDFs, and videos up to 50 MB continue to use Supabase Storage
 
 ## Environment variables (server only — never `NEXT_PUBLIC_*`)
 
@@ -39,7 +38,7 @@ Put these in `.env.local` / hosting secrets. **Do not commit secrets. Do not pas
 3. Server verifies auth + story ownership + MIME allow-list + size cap.
 4. Server starts S3 multipart upload on R2 and returns **presigned part URLs**.
 5. Browser PUTs parts **directly to R2** (secrets never leave the server).
-6. Browser calls complete; Phase 2 will write `story_media` with `storage_provider='r2'`.
+6. Browser calls complete, then the app writes `story_media` with `storage_provider='r2'`.
 
 MIME from the client is treated as a claim; server allow-lists types and Content-Type is set on CreateMultipartUpload.
 
@@ -58,7 +57,7 @@ stories/{storyId}/{ownerId}/{uuid}/{safeFileName}
 ```
 Collision-safe, story-scoped cleanup, non-guessable uuid segment.
 
-## Playback recommendation (Phase 2+)
+## Playback
 - Prefer **private bucket** + **short-lived signed GET** for pending/rejected media (moderation + anonymous stories).
 - For published stories, either signed GET or a Cloudflare custom domain in front of R2.
 - Require H.264 + AAC MP4 for Safari / Capacitor reliability.
@@ -66,9 +65,9 @@ Collision-safe, story-scoped cleanup, non-guessable uuid segment.
 
 ## CORS (configure in Cloudflare R2 bucket settings)
 See `docs/R2_CORS.example.json`.
-Allow your localhost origin and future production / Capacitor origins. Do **not** use `*` with credentialed flows; for presigned PUT, AllowedOrigins should list explicit dev/prod origins, AllowedMethods `PUT, GET, HEAD`, AllowedHeaders include `Content-Type`, `Content-Length`, and expose `ETag`.
+Allow localhost and the deployed production origins listed in `docs/R2_CORS.example.json`. Do **not** use `*` for `AllowedOrigins`; presigned browser PUTs require explicit origins, `PUT`, and an exposed `ETag`. R2 handles `OPTIONS` preflight automatically from the configured policy. `AllowedHeaders: ["*"]` accommodates the browser and S3-compatible request headers without broadening permitted origins.
 
-## Lifecycle / cleanup (design only — not automated in Phase 1)
+## Lifecycle / cleanup
 | Event | Eventual action |
 |---|---|
 | Incomplete multipart | Bucket lifecycle abort after 1–7 days |
@@ -76,14 +75,3 @@ Allow your localhost origin and future production / Capacitor origins. Do **not*
 | Submit fails after upload | Delete R2 object; no/orphan `story_media` |
 | Story rejected / deleted | Delete R2 objects for that story id prefix |
 | Orphans | Periodic job listing `stories/` vs DB keys |
-
-## Intended Phase 2
-1. Apply `storage_provider` migration when ready.
-2. Wire `/tell` large videos → R2 multipart APIs (not Supabase Storage).
-3. Insert `story_media` with `storage_provider='r2'`.
-4. Story Detail signed/public playback for R2 keys.
-5. Keep ≤50 MB path on Supabase **or** send all videos to R2 (product choice).
-6. Retire FFmpeg.wasm as the oversized-video gate.
-
-## Intentionally NOT changed in Phase 1
-TellStoryForm, VideoRecorder, FFmpeg pipeline, `uploadStoryMedia`, Supabase `story-media` bucket, moderation, auth UX, submission behavior.

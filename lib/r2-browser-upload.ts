@@ -23,6 +23,8 @@ function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+class NonRetryablePartUploadError extends Error {}
+
 async function readApiJson(
   path: string,
   init: RequestInit,
@@ -71,11 +73,15 @@ async function putPartWithRetry(
         signal,
       });
       if (!res.ok) {
-        throw new Error(`R2 returned HTTP ${res.status}.`);
+        const error = new Error(`R2 returned HTTP ${res.status}.`);
+        if (res.status !== 408 && res.status !== 429 && res.status < 500) {
+          throw new NonRetryablePartUploadError(error.message);
+        }
+        throw error;
       }
       const etag = res.headers.get("ETag") || res.headers.get("etag");
       if (!etag) {
-        throw new Error(
+        throw new NonRetryablePartUploadError(
           "R2 did not expose an ETag response header. Confirm the bucket CORS policy exposes ETag.",
         );
       }
@@ -83,6 +89,7 @@ async function putPartWithRetry(
     } catch (e) {
       lastErr = e;
       if (signal?.aborted) throw e;
+      if (e instanceof NonRetryablePartUploadError) throw e;
       if (attempt < retries - 1) await sleep(400 * (attempt + 1));
     }
   }
