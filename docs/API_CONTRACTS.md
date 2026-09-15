@@ -11,3 +11,10 @@ All responses use `{ "data": ... }`; failures use `{ "error": { "code", "message
 
 ## Not implemented in Phase 4A
 Authenticated profile, write/story creation, block/report, entitlement, Apple verification, and restore APIs remain later phases. Existing R2 and account-deletion APIs remain web-compatible routes.
+
+## Authenticated endpoint
+| Method | Path | Auth | Behavior |
+|---|---|---|---|
+| DELETE | `/api/me` | Cookie session or validated Bearer token | Requires `{ "confirmation": "DELETE" }`; deletes only the authenticated account through `lib/account/delete-account.ts`. |
+
+The browser `/api/account/delete` route uses the same server-only deletion function. Neither route accepts a target user ID.
