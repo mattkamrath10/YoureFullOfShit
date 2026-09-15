@@ -3,14 +3,14 @@
  * Prefer NEXT_PUBLIC_SITE_URL in production (no trailing slash).
  */
 
-export const SITE_NAME = "You're Full of Shit";
+export const SITE_NAME = "Last Storyteller";
+
+export const SITE_TAGLINE = "Every story deserves to be told.";
 
 export const SITE_DESCRIPTION =
-  "Everybody has a story. Like, comment, and share. Entertainment — not factual verification.";
+  "Every story deserves to be told. Discover other people's stories and upload your own.";
 
-// Preserve the correction only for old misspelled Vercel links.
-const LEGACY_TYPO_SITE_HOST = "your-full-of-shit.vercel.app";
-const LEGACY_CANONICAL_SITE_HOST = "youre-full-of-shit.vercel.app";
+export const SITE_EMAIL = "mattk@laststoryteller.com";
 
 export function normalizeSiteOrigin(raw: string): string {
   let value = raw.trim().replace(/\/$/, "");
@@ -20,9 +20,6 @@ export function normalizeSiteOrigin(raw: string): string {
   }
   try {
     const url = new URL(value);
-    if (url.hostname.toLowerCase() === LEGACY_TYPO_SITE_HOST) {
-      url.hostname = LEGACY_CANONICAL_SITE_HOST;
-    }
     return url.origin.replace(/\/$/, "");
   } catch {
     return value.replace(/\/$/, "");

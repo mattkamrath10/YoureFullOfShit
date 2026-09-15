@@ -1,4 +1,4 @@
-# YFOS — Cloudflare R2 video storage (Phase 1)
+# Last Storyteller — Cloudflare R2 video storage (Phase 1)
 
 ## Why
 Supabase Free caps **individual objects at 50 MB**. Client FFmpeg.wasm compress/split was a workaround and is fragile on phones/Turbopack. R2 stores large videos without upgrading Supabase.
@@ -35,7 +35,7 @@ Put these in `.env.local` / hosting secrets. **Do not commit secrets. Do not pas
 
 ## Security model
 1. Browser uses existing Supabase session.
-2. Browser calls YFOS API with story id + file meta.
+2. Browser calls the app API with story id + file meta.
 3. Server verifies auth + story ownership + MIME allow-list + size cap.
 4. Server starts S3 multipart upload on R2 and returns **presigned part URLs**.
 5. Browser PUTs parts **directly to R2** (secrets never leave the server).

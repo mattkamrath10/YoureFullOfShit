@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StoryDetail } from "@/components/StoryDetail";
 import { isEmailAuthUser } from "@/lib/auth/session";
+import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 import { buildStoryMetadata } from "@/lib/site-metadata";
 import { getSignedMedia, getStoryById } from "@/lib/stories";
 import { createClient } from "@/lib/supabase/server";
@@ -30,9 +31,8 @@ export async function generateMetadata({
 
   if (!isPublic) {
     return {
-      title: "You're Full of Shit",
-      description:
-        "Everybody has a story. Like, comment, and share. Entertainment — not factual verification.",
+      title: SITE_NAME,
+      description: SITE_DESCRIPTION,
       robots: { index: false, follow: false },
     };
   }
@@ -74,7 +74,7 @@ export default async function StoryPage({
     <div className="space-y-4">
       <Link
         href="/"
-        className="inline-flex text-sm font-semibold text-zinc-400 hover:text-orange-300"
+        className="inline-flex text-sm font-semibold text-zinc-400 hover:text-amber-300"
       >
         Back to Discover
       </Link>

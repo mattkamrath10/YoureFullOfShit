@@ -1,6 +1,6 @@
 "use client";
 
-/** Browser multipart uploader for YFOS → Cloudflare R2 (no secrets in client). */
+/** Browser multipart uploader for Last Storyteller → Cloudflare R2 (no secrets in client). */
 
 export type R2BrowserUploadProgress = {
   phase: "starting" | "uploading" | "completing" | "done" | "cancelled" | "error";

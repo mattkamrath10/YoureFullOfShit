@@ -228,7 +228,7 @@ export async function notifyAdminsOfNewStory(
     return { ok: false, error: "no_admin_recipients", storyId };
   }
 
-  const subject = "New Story Submitted — You're Full of Shit";
+  const subject = "New Story Submitted — Last Storyteller";
   const text = [
     "NEW STORY WAITING FOR REVIEW",
     "",
@@ -250,7 +250,7 @@ export async function notifyAdminsOfNewStory(
 <body style="margin:0;padding:24px;background:#0a0a0a;color:#e4e4e7;font-family:system-ui,-apple-system,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#18181b;border:1px solid #3f3f46;border-radius:16px;">
     <tr><td style="padding:28px 24px;">
-      <p style="margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:0.12em;color:#fb923c;text-transform:uppercase;">You're Full of Shit</p>
+      <p style="margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:0.12em;color:#f5b942;text-transform:uppercase;">Last Storyteller</p>
       <h1 style="margin:0 0 20px;font-size:22px;line-height:1.3;color:#fff;">NEW STORY WAITING FOR REVIEW</h1>
       <p style="margin:0 0 8px;"><strong style="color:#a1a1aa;">Title:</strong> ${escapeHtml(String(story.title))}</p>
       <p style="margin:0 0 8px;"><strong style="color:#a1a1aa;">Category:</strong> ${escapeHtml(category)}</p>
@@ -262,7 +262,7 @@ export async function notifyAdminsOfNewStory(
           ? `<p style="margin:0 0 20px;padding:12px 14px;background:#09090b;border-radius:12px;color:#d4d4d8;font-size:14px;line-height:1.5;">${escapeHtml(excerpt)}</p>`
           : ""
       }
-      <a href="${escapeHtml(reviewUrl)}" style="display:inline-block;padding:12px 22px;background:#f97316;color:#000;font-weight:800;text-decoration:none;border-radius:999px;text-transform:uppercase;letter-spacing:0.04em;">Review Story</a>
+      <a href="${escapeHtml(reviewUrl)}" style="display:inline-block;padding:12px 22px;background:#f5b942;color:#000;font-weight:800;text-decoration:none;border-radius:999px;text-transform:uppercase;letter-spacing:0.04em;">Review Story</a>
     </td></tr>
   </table>
 </body>

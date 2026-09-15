@@ -1,8 +1,13 @@
-# YFOS Guest Video ≤50MB + access update
+# Last Storyteller
 
-Locked social matrix + guest Supabase media (≤50 MB). R2 stays email-only for large videos.
+Discover other people's stories and upload your own. Every story deserves to be told.
 
-## ACCESS (short)
+Production domain: `https://laststoryteller.com` (also account for `www`).
+Canonical site URL is read from `NEXT_PUBLIC_SITE_URL`. Primary user-facing email: `mattk@laststoryteller.com`.
+
+This is a Next.js App Router app hosted on Render. Do not rename the existing Render service (`youre-full-of-shit` in `render.yaml`) — that identifier is the live service, not the public brand.
+
+## Access
 
 | | Guests | FREE email account |
 |--|--------|--------------------|
@@ -15,23 +20,24 @@ Locked social matrix + guest Supabase media (≤50 MB). R2 stays email-only for 
 | My Stories / Edit / photo add | No → prompt | Yes |
 | Report | Keep current (account to submit OK) | Yes |
 
-## Apply on PC
+## Local
 
-1. Copy `yfos-guest-video50.tar.gz` + `APPLY_YFOS_GUEST_VIDEO50.ps1` into the Next.js app root
-2. No new SQL (prior access / story-reports migrations unchanged)
-3. `.\APPLY_YFOS_GUEST_VIDEO50.ps1`
+```bash
+npm install
+npm run dev
+```
 
-## Ships
+Copy `.env.example` to `.env.local` and fill values. Never commit secrets.
 
-- `StoryActions` — Share allowed for guests; Like/Follow still require email; Report preserved; Comment scrolls to list (view OK)
-- `CommentSection` — guests view comments; post still gated
-- `TellStoryForm` — guests attach ≤50 MB via Supabase; >50 MB prompts free account; email keeps R2
-- `lib/media.ts` + `lib/submit-story.ts` — client + insert-path reject guest `byte_size` > 50 MB; no R2 for non-email
-- `lib/social/share.ts` — no account gate
-- `lib/r2/auth.ts` + `/api/r2/upload/create` — email account required for R2 create
-- `docs/ACCESS_MATRIX.md`
+## Production cutover (Matthew)
 
-## Preserved
+1. Merge this rebrand and wait for the Render deploy of the existing `youre-full-of-shit` service.
+2. Set Render env `NEXT_PUBLIC_SITE_URL=https://laststoryteller.com` (no trailing slash).
+3. Set `RESEND_FROM_EMAIL` to a verified Last Storyteller sender such as `Last Storyteller <mattk@laststoryteller.com>`.
+4. Set `VAPID_SUBJECT=mailto:mattk@laststoryteller.com` if Web Push is enabled.
+5. In Supabase Auth URL Configuration, set Site URL and redirects for `https://laststoryteller.com` and `https://www.laststoryteller.com`.
+6. In R2 CORS, add those origins (see `docs/R2_CORS.example.json`).
+7. In Render → Custom Domains, add apex and www, then copy the **exact** DNS records Render shows. Do not guess A/CNAME targets.
+8. Reinstall the iPhone Home Screen app if the old YFOS icon is cached.
 
-R2 for signed-in large files, auth, moderation, story reports/edit (already on disk from prior packages).
-`ensureUser` anonymous ownership for guest submit still OK.
+See `docs/PRODUCTION_LAUNCH.md` for the full operator checklist.

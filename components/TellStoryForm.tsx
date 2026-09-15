@@ -298,7 +298,7 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
             Tell Your Story
           </p>
           <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
-            Everybody has a story.
+            Every story deserves to be told.
           </h1>
           <p className="mx-auto max-w-xl text-sm text-zinc-400">
             Type or speak it. Record video separately. Add evidence if you want.

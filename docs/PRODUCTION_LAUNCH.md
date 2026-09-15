@@ -1,6 +1,6 @@
-# YFOS Production Launch Checklist
+# Last Storyteller Production Launch Checklist
 
-**You're Full Of Shit (YFOS)** — Next.js App Router production prep.
+**Last Storyteller** — Next.js App Router production prep. Public domain: `https://laststoryteller.com` (also account for `www`).
 
 This package does **not** deploy the app and does **not** claim the site is live.
 Replace every `YOUR_DOMAIN` / placeholder with your real values locally.
@@ -16,7 +16,7 @@ Brief alternatives:
 
 ## A. Preflight (local app on your PC)
 
-- [ ] All prior YFOS packages applied on the Next.js app root (auth, R2 phase 2, mod-ui, narrator TTS, categories, etc.).
+- [ ] All prior Last Storyteller / historical YFOS packages applied on the Next.js app root (auth, R2 phase 2, mod-ui, narrator TTS, categories, etc.).
 - [ ] `npx tsc --noEmit` and `npm run build` succeed locally.
 - [ ] No secrets committed (`.env.local` gitignored).
 - [ ] Copy `yfos-production.tar.gz` + `APPLY_YFOS_PRODUCTION.ps1` into the app root; run APPLY (see package README).
@@ -27,9 +27,9 @@ Brief alternatives:
 
 ## B. Choose domain (placeholder)
 
-- [ ] **[USER ACTION REQUIRED]** Pick production hostname, e.g. `https://YOUR_DOMAIN` (and optional `www`).
+- [ ] **[USER ACTION REQUIRED]** Pick production hostname: `https://laststoryteller.com` (and `www`).
 - [ ] Decide whether apex + www both serve the app and configure the redirect at Render or your DNS provider.
-- [ ] Set `NEXT_PUBLIC_SITE_URL=https://YOUR_DOMAIN` (no trailing slash) once known.
+- [ ] Set `NEXT_PUBLIC_SITE_URL=https://laststoryteller.com` (no trailing slash) once known.
 
 ---
 
@@ -55,7 +55,7 @@ Mark each for Production (and Preview if you want R2/auth to work on previews).
 |------|----------|--------|
 | `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase Project Settings -> API |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Anon key only — **not** service_role |
-| `NEXT_PUBLIC_SITE_URL` | Strongly yes | `https://YOUR_DOMAIN` — OG + sitemap |
+| `NEXT_PUBLIC_SITE_URL` | Strongly yes | `https://laststoryteller.com` — OG + sitemap |
 
 ### Server only (never `NEXT_PUBLIC_`)
 
@@ -72,8 +72,11 @@ Mark each for Production (and Preview if you want R2/auth to work on previews).
 | `OPENAI_TTS_MODEL` | Optional | Default `tts-1-hd` |
 | `SUPABASE_SERVICE_ROLE_KEY` | Required for admin notify | Server-only Supabase service_role key |
 | `RESEND_API_KEY` | Required for admin notify | Resend API key |
-| `RESEND_FROM_EMAIL` | Required for admin notify | Verified Resend sender |
+| `RESEND_FROM_EMAIL` | Required for admin notify | Verified Resend sender, e.g. `Last Storyteller <mattk@laststoryteller.com>` |
 | `ADMIN_NOTIFY_EMAIL` | Optional | Comma-separated fallback admin recipients |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Required for admin phone alerts | Browser-visible VAPID public key |
+| `VAPID_PRIVATE_KEY` | Required for admin phone alerts | Server-only VAPID private key |
+| `VAPID_SUBJECT` | Required for admin phone alerts | `mailto:mattk@laststoryteller.com` |
 
 - [ ] **[USER ACTION REQUIRED]** Copy values from Vercel to Render (or use `.env.local` for local only). Use `.env.example` as the name checklist.
 - [ ] Confirm **no** `NEXT_PUBLIC_OPENAI_API_KEY` and **no** Supabase **service_role** in client env.
@@ -87,12 +90,16 @@ Set `NEXT_PUBLIC_SITE_URL` explicitly. If it is absent, `getSiteUrl()` falls bac
 
 Dashboard -> Authentication -> URL Configuration:
 
-- [ ] **[USER ACTION REQUIRED]** **Site URL:** `https://YOUR_DOMAIN`
+- [ ] **Site URL:** `https://laststoryteller.com`
 - [ ] **[USER ACTION REQUIRED]** **Redirect URLs allowlist** (add all that apply):
-  - `https://YOUR_DOMAIN/**` (or explicit paths below)
-  - `https://YOUR_DOMAIN/reset-password`
-  - `https://YOUR_DOMAIN/sign-in`
-  - `https://YOUR_DOMAIN/create-account`
+  - `https://laststoryteller.com/**` (or explicit paths below)
+  - `https://laststoryteller.com/reset-password`
+  - `https://laststoryteller.com/sign-in`
+  - `https://laststoryteller.com/create-account`
+  - `https://www.laststoryteller.com/**`
+  - `https://www.laststoryteller.com/reset-password`
+  - `https://www.laststoryteller.com/sign-in`
+  - `https://www.laststoryteller.com/create-account`
   - `http://localhost:3000/**`
   - `http://localhost:3000/reset-password`
   - Render preview URLs if used: add their exact origins and redirect paths (tighten to only the environments you use)
@@ -118,8 +125,8 @@ So production origin **must** be allowlisted or reset emails fail.
 "AllowedOrigins": [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
-  "https://YOUR_DOMAIN",
-  "https://www.YOUR_DOMAIN"
+  "https://laststoryteller.com",
+  "https://www.laststoryteller.com"
 ]
 ```
 
@@ -132,7 +139,7 @@ Allowed methods: `GET`, `PUT`, `HEAD`. Expose `ETag`. Do **not** use `*` for ori
 
 ---
 
-## G. Database migrations (known YFOS work)
+## G. Database migrations (known historical YFOS work)
 
 Apply in Supabase SQL Editor if not already applied (order matters for dependencies). Mark each as done on your project:
 
@@ -183,16 +190,18 @@ update public.profiles set is_admin = true where id = 'YOUR_AUTH_USER_UUID';
 
 ## I. DNS for Render
 
-- [ ] **[USER ACTION REQUIRED]** In Render -> service -> Settings -> Custom Domains, add `YOUR_DOMAIN` (and `www` if desired).
-- [ ] **[USER ACTION REQUIRED]** At your DNS host, add the records Render shows:
+- [ ] **[USER ACTION REQUIRED]** In Render → service → Settings → Custom Domains, add `laststoryteller.com` and `www.laststoryteller.com`.
+- [ ] **[USER ACTION REQUIRED]** At your DNS host, add **exactly** the records Render shows for each hostname. Do not guess targets.
 
-| Type | Name | Value |
-|------|------|-------|
-| A / ALIAS / CNAME | `@` | Use the exact Render custom-domain target for your DNS provider |
-| CNAME | `www` | Use the exact Render custom-domain target |
+Look for (and copy from the Render UI, not from this checklist):
+
+- Apex (`laststoryteller.com`): A / ALIAS / ANAME / CNAME — **use the exact Render value**
+- `www.laststoryteller.com`: CNAME — **use the exact Render value**
+- Any TXT / verification records Render displays for domain ownership
+- SSL / TLS certificate status in Render after DNS is pointed
 
 - [ ] Wait for TLS certificate issuance from Render.
-- [ ] Verify `https://YOUR_DOMAIN` resolves (after you deploy — this checklist does not deploy for you).
+- [ ] Verify `https://laststoryteller.com` and `https://www.laststoryteller.com` resolve after deploy.
 
 ---
 
@@ -208,8 +217,8 @@ Additive files (APPLY extracts them):
 | `lib/site-metadata.ts` | Optional `buildRootMetadata()` for title/description/openGraph |
 
 - [ ] After `NEXT_PUBLIC_SITE_URL` is set, hit `/sitemap.xml` on a deployed URL and confirm origins.
-- [ ] Optionally add `Sitemap: https://YOUR_DOMAIN/sitemap.xml` to `robots.txt` once domain is final.
-- [ ] Favicon: existing `/yfos-icon.png` (already referenced in auth-era layout).
+- [ ] Optionally add `Sitemap: https://laststoryteller.com/sitemap.xml` to `robots.txt` once domain is final.
+- [ ] Favicon / PWA / OG: official Last Storyteller artwork (`public/last-storyteller-logo.png`, `app/icon.png`, `public/og-share.png`).
 
 ---
 
@@ -265,8 +274,10 @@ If a production deploy misbehaves:
 ## Quick reference — auth redirect URLs
 
 ```
-https://YOUR_DOMAIN
-https://YOUR_DOMAIN/reset-password
+https://laststoryteller.com
+https://laststoryteller.com/reset-password
+https://www.laststoryteller.com
+https://www.laststoryteller.com/reset-password
 http://localhost:3000
 http://localhost:3000/reset-password
 ```

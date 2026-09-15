@@ -17,7 +17,7 @@ export type ShareResult =
  */
 export async function shareStory(args: ShareStoryArgs): Promise<ShareResult> {
   const url = args.url.trim();
-  const title = args.title.trim() || "You're Full of Shit";
+  const title = args.title.trim() || "Last Storyteller";
   const text = (args.text ?? title).trim();
 
   if (

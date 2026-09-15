@@ -1,4 +1,4 @@
-# YFOS Free-plan on-device video prep
+# Last Storyteller Free-plan on-device video prep
 
 ## Flow
 1. File/camera under 50 MB → existing upload unchanged
