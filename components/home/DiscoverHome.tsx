@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { StoryCard } from "@/components/StoryCard";
 import { CategoryCarousel } from "@/components/home/CategoryCarousel";
+import { HOME_CAROUSEL_RESET_EVENT } from "@/lib/home-navigation";
 import type { Category, Story } from "@/types/database";
 
 type FilterId = "most-recent" | string;
@@ -18,6 +19,17 @@ export function DiscoverHome({
 }) {
   const [filter, setFilter] = useState<FilterId>("most-recent");
   const [query, setQuery] = useState("");
+  const [carouselResetVersion, setCarouselResetVersion] = useState(0);
+
+  useEffect(() => {
+    const resetHome = () => {
+      setFilter("most-recent");
+      setQuery("");
+      setCarouselResetVersion((version) => version + 1);
+    };
+    window.addEventListener(HOME_CAROUSEL_RESET_EVENT, resetHome);
+    return () => window.removeEventListener(HOME_CAROUSEL_RESET_EVENT, resetHome);
+  }, []);
 
   const chips: { id: FilterId; label: string }[] = useMemo(() => {
     const base = [{ id: "most-recent" as const, label: "Most Recent" }];
@@ -119,6 +131,7 @@ export function DiscoverHome({
         </div>
 
         <CategoryCarousel
+          key={carouselResetVersion}
           chips={chips}
           activeId={filter}
           onSelect={setFilter}
