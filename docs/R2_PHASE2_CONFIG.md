@@ -5,10 +5,10 @@ Code is ready. These steps must be done in Cloudflare + Supabase dashboards (not
 Do **not** recreate or rename the existing R2 bucket. The example name below is historical; keep the live `R2_BUCKET_NAME` already set in Render.
 
 ## 1) Cloudflare R2
-1. Create bucket (e.g. `yfos-story-videos`), **private** (not public).
-2. Create R2 API token with Object Read & Write on that bucket.
+1. Use the existing **private** R2 bucket. Do not recreate or rename it.
+2. Verify its R2 API token has Object Read & Write on that bucket.
 3. Note Account ID, Access Key ID, Secret Access Key.
-4. Apply CORS from `docs/R2_CORS.example.json` (add production origins later).
+4. Apply `docs/R2_CORS.example.json`. It includes `https://laststoryteller.com` and `https://www.laststoryteller.com`; `OPTIONS` preflights are handled automatically by R2 from this CORS policy.
 5. Optional: incomplete multipart lifecycle abort after 7 days.
 
 ## 2) Local env (`.env.local` — do not paste values in chat)

@@ -23,10 +23,42 @@ function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+async function readApiJson(
+  path: string,
+  init: RequestInit,
+  stage: "preparation" | "completion",
+): Promise<Record<string, unknown>> {
+  let response: Response;
+  try {
+    response = await fetch(path, init);
+  } catch {
+    throw new Error(
+      `R2 upload ${stage} failed because the app could not be reached. Check the production deployment and try again.`,
+    );
+  }
+
+  const raw = await response.text();
+  let body: Record<string, unknown> = {};
+  try {
+    body = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+  } catch {
+    // A proxy/server failure can return HTML instead of the API's JSON response.
+  }
+
+  if (!response.ok) {
+    const detail =
+      typeof body.error === "string" ? body.error : `Request returned ${response.status}.`;
+    throw new Error(`R2 upload ${stage} failed: ${detail}`);
+  }
+
+  return body;
+}
+
 async function putPartWithRetry(
   url: string,
   blob: Blob,
   signal: AbortSignal | undefined,
+  partNumber: number,
   retries = 3,
 ): Promise<string> {
   let lastErr: unknown;
@@ -39,11 +71,13 @@ async function putPartWithRetry(
         signal,
       });
       if (!res.ok) {
-        throw new Error(`Part upload failed (${res.status}).`);
+        throw new Error(`R2 returned HTTP ${res.status}.`);
       }
       const etag = res.headers.get("ETag") || res.headers.get("etag");
       if (!etag) {
-        throw new Error("R2 did not return an ETag for an uploaded part.");
+        throw new Error(
+          "R2 did not expose an ETag response header. Confirm the bucket CORS policy exposes ETag.",
+        );
       }
       return etag;
     } catch (e) {
@@ -52,7 +86,11 @@ async function putPartWithRetry(
       if (attempt < retries - 1) await sleep(400 * (attempt + 1));
     }
   }
-  throw lastErr instanceof Error ? lastErr : new Error("Part upload failed.");
+  const detail =
+    lastErr instanceof Error ? lastErr.message : "The browser could not reach R2.";
+  throw new Error(
+    `R2 upload failed on part ${partNumber} after ${retries} attempts: ${detail} Check the R2 CORS policy allows this site and PUT requests.`,
+  );
 }
 
 /**
@@ -77,19 +115,21 @@ export async function uploadLargeVideoToR2(args: {
     bytesTotal,
   });
 
-  const createRes = await fetch("/api/r2/upload/create", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      storyId,
-      fileName: file.name,
-      mimeType,
-      byteSize: file.size,
-    }),
-    signal,
-  });
-
-  const createJson = (await createRes.json()) as {
+  const createJson = (await readApiJson(
+    "/api/r2/upload/create",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        storyId,
+        fileName: file.name,
+        mimeType,
+        byteSize: file.size,
+      }),
+      signal,
+    },
+    "preparation",
+  )) as {
     error?: string;
     code?: string;
     objectKey?: string;
@@ -98,13 +138,10 @@ export async function uploadLargeVideoToR2(args: {
     parts?: Array<{ partNumber: number; url: string }>;
   };
 
-  if (!createRes.ok) {
-    if (createJson.code === "R2_NOT_CONFIGURED") {
-      throw new Error(
-        "Large video upload isn’t configured yet (Cloudflare R2). Videos under 50 MB still work.",
-      );
-    }
-    throw new Error(createJson.error || "Could not start large video upload.");
+  if (!createJson.objectKey || !createJson.uploadId || !createJson.partSize) {
+    throw new Error(
+      "R2 upload preparation failed: the server returned incomplete multipart upload details.",
+    );
   }
 
   const objectKey = createJson.objectKey!;
@@ -160,7 +197,12 @@ export async function uploadLargeVideoToR2(args: {
         bytesTotal,
       });
 
-      const etag = await putPartWithRetry(part.url, blob, signal);
+      const etag = await putPartWithRetry(
+        part.url,
+        blob,
+        signal,
+        part.partNumber,
+      );
       completed.push({ partNumber: part.partNumber, etag });
       bytesSent = end;
 
@@ -181,17 +223,16 @@ export async function uploadLargeVideoToR2(args: {
       bytesTotal,
     });
 
-    const completeRes = await fetch("/api/r2/upload/complete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ objectKey, uploadId, parts: completed }),
-      signal,
-    });
-    const completeJson = (await completeRes.json()) as { error?: string };
-    if (!completeRes.ok) {
-      await abortRemote();
-      throw new Error(completeJson.error || "Could not finish large video upload.");
-    }
+    await readApiJson(
+      "/api/r2/upload/complete",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ objectKey, uploadId, parts: completed }),
+        signal,
+      },
+      "completion",
+    );
 
     onProgress?.({
       phase: "done",
