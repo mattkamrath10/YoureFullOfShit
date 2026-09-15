@@ -9,17 +9,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-dvh bg-[#050505] text-zinc-100">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(249,115,22,0.14),_transparent_50%)]" />
-      <header className="sticky top-0 z-40 border-b border-orange-500/20 bg-[#050505]/85 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+    <div className="min-h-dvh bg-[#030914] text-zinc-100">
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_50%_-10%,_rgba(180,83,9,0.14),_transparent_34%),radial-gradient(ellipse_at_50%_38%,_rgba(11,32,66,0.34),_transparent_48%)]" />
+      <header className="sticky top-0 z-40 border-b border-amber-400/20 bg-[#040812]/85 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
           <Link href="/" className="group flex min-w-0 items-center gap-2.5">
             <Image
               src="/yfos-icon.png"
               alt="You're Full of Shit"
               width={40}
               height={40}
-              className="h-9 w-9 shrink-0 rounded-xl shadow-[0_0_24px_rgba(249,115,22,0.45)] sm:h-10 sm:w-10"
+              className="h-9 w-9 shrink-0 rounded-xl shadow-[0_0_24px_rgba(249,115,22,0.45)]"
               priority
             />
             <p className="truncate text-sm font-black tracking-tight text-white sm:text-base">
@@ -35,20 +35,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <nav className="hidden items-center gap-2 md:flex">
             <Link
               href="/#feed"
-              className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:bg-white/10"
+              className="rounded-full border border-amber-400/20 bg-white/[0.035] px-3.5 py-1.5 text-xs font-semibold text-zinc-200 transition hover:border-amber-300/45 hover:bg-white/[0.08]"
             >
               Search
             </Link>
             <Link
               href="/my-stories"
-              className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:bg-white/10"
+              className="rounded-full border border-amber-400/20 bg-white/[0.035] px-3.5 py-1.5 text-xs font-semibold text-zinc-200 transition hover:border-amber-300/45 hover:bg-white/[0.08]"
             >
               My Stories
             </Link>
             <AuthNav />
             <Link
               href="/tell"
-              className="rounded-full bg-orange-500 px-3 py-1.5 text-xs font-black uppercase tracking-wide text-black shadow-[0_0_20px_rgba(249,115,22,0.35)] hover:bg-orange-400"
+              className="rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-1.5 text-xs font-black uppercase tracking-wide text-white shadow-[0_0_20px_rgba(249,115,22,0.35)] transition hover:-translate-y-px hover:from-amber-400 hover:to-orange-400"
             >
               Tell Your Story
             </Link>
@@ -82,8 +82,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         {menuOpen ? (
-          <div className="border-t border-orange-500/15 bg-[#050505]/95 px-4 py-3 md:hidden">
-            <nav className="mx-auto flex max-w-5xl flex-col gap-2">
+          <div className="border-t border-orange-500/15 bg-[#040812]/95 px-4 py-3 md:hidden">
+            <nav className="mx-auto flex max-w-6xl flex-col gap-2">
               <Link
                 href="/my-stories"
                 onClick={() => setMenuOpen(false)}
@@ -106,7 +106,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         ) : null}
       </header>
 
-      <main className="relative mx-auto max-w-3xl px-4 pb-16 pt-6 sm:max-w-4xl sm:px-6 lg:max-w-5xl">
+      <main className="relative mx-auto max-w-3xl px-4 pb-16 pt-5 sm:max-w-5xl sm:px-6 lg:max-w-6xl">
         {children}
       </main>
     </div>

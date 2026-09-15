@@ -58,72 +58,52 @@ export function DiscoverHome({
   }, [stories, filter, query, categories]);
 
   return (
-    <div className="space-y-10 sm:space-y-12">
+    <div className="space-y-11 pb-4 sm:space-y-14">
       {/* HERO */}
-      <section className="relative mx-auto max-w-2xl space-y-6 text-center sm:space-y-8">
-        <div className="space-y-2 px-1">
-          <h1 className="text-balance text-2xl font-black leading-tight tracking-tight text-white sm:text-4xl sm:leading-tight">
+      <section className="home-hero relative -mx-4 overflow-hidden px-4 pb-2 pt-4 text-center sm:-mx-6 sm:px-6 sm:pt-7 lg:-mx-8 lg:px-8">
+        <div className="relative mx-auto max-w-3xl">
+          <div className="space-y-2 px-1">
+            <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-orange-300/65 sm:text-xs">
+              Every story deserves to be told
+            </p>
+            <h1 className="text-balance text-3xl font-black leading-[1.08] tracking-tight text-white sm:text-5xl md:text-6xl">
             <span className="text-orange-400">Discover</span> other
             people&apos;s stories
             <br className="hidden sm:block" /> and upload your own story.
-          </h1>
-          <p className="text-sm text-zinc-300 sm:text-base">
-            We&apos;ll decide if you&apos;re full of shit.
-          </p>
-        </div>
-
-        {/* Mascot + side phrases: phrases live in side gutters, never on the icon */}
-        <div className="relative mx-auto w-full max-w-3xl overflow-x-clip px-1 sm:px-2">
-          <div className="pointer-events-none absolute inset-y-4 left-0 z-10 flex w-[28%] max-w-[9.5rem] flex-col justify-between py-2 sm:inset-y-6 sm:w-[30%] sm:max-w-[11rem] md:max-w-[13rem]">
-            <span className="origin-left -rotate-[18deg] self-start text-left text-[11px] font-black uppercase leading-tight tracking-wide text-orange-400 drop-shadow-[0_0_12px_rgba(249,115,22,0.55)] sm:text-sm md:text-base">
-              Real stories
-            </span>
-            <span className="origin-left -rotate-[12deg] self-start text-left text-[11px] font-black uppercase leading-tight tracking-wide text-orange-400 drop-shadow-[0_0_12px_rgba(249,115,22,0.55)] sm:text-sm md:text-base">
-              Wild confessions
-            </span>
-          </div>
-          <div className="pointer-events-none absolute inset-y-4 right-0 z-10 flex w-[28%] max-w-[9.5rem] flex-col justify-between py-2 sm:inset-y-6 sm:w-[30%] sm:max-w-[11rem] md:max-w-[13rem]">
-            <span className="origin-right rotate-[16deg] self-end text-right text-[11px] font-black uppercase leading-tight tracking-wide text-orange-400 drop-shadow-[0_0_12px_rgba(249,115,22,0.55)] sm:text-sm md:text-base">
-              Funny moments
-            </span>
-            <span className="origin-right rotate-[14deg] self-end text-right text-[11px] font-black uppercase leading-tight tracking-wide text-orange-400 drop-shadow-[0_0_12px_rgba(249,115,22,0.55)] sm:text-sm md:text-base">
-              Crazy experiences
-            </span>
           </div>
 
-          <div className="relative z-0 mx-auto w-[min(58vw,240px)] sm:w-[280px] md:w-[300px]">
-            <div className="pointer-events-none absolute -inset-6 rounded-[2rem] bg-orange-500/20 blur-3xl sm:-inset-10" />
-            <div className="relative overflow-hidden rounded-[1.75rem] border-2 border-orange-400 shadow-[0_0_48px_rgba(249,115,22,0.45)] sm:rounded-[2rem] sm:border-[3px]">
-              <Image
-                src="/yfos-icon.png"
-                alt="You're Full of Shit mascot"
-                width={640}
-                height={640}
-                priority
-                className="h-auto w-full bg-black"
-              />
-            </div>
+          <div className="hero-artwork mx-auto mt-5 w-[min(86vw,34rem)] sm:mt-7">
+            <div className="hero-artwork__atmosphere" aria-hidden />
+            <Image
+              src="/yfos-icon.png"
+              alt="You're Full of Shit mascot"
+              width={640}
+              height={640}
+              priority
+              className="relative z-10 h-auto w-full"
+            />
+            <div className="hero-artwork__glow" aria-hidden />
           </div>
-        </div>
 
-        <div className="space-y-3">
-          <Link
-            href="/tell"
-            className="inline-flex w-full max-w-md items-center justify-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-orange-400 px-6 py-3.5 text-sm font-black uppercase tracking-wide text-white shadow-[0_0_36px_rgba(249,115,22,0.55)] transition hover:from-orange-400 hover:to-orange-300 sm:px-8 sm:text-base"
-          >
-            <span aria-hidden>✎</span>
-            Tell Your Story
-            <span aria-hidden>›</span>
-          </Link>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500 sm:text-xs">
-            Or just dive in and see what others are sharing
-          </p>
+          <div className="mt-1 space-y-3 sm:mt-3">
+            <Link
+              href="/tell"
+              className="inline-flex w-full max-w-md items-center justify-center gap-2 rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-orange-400 px-7 py-4 text-sm font-black uppercase tracking-wide text-white shadow-[0_10px_30px_rgba(249,115,22,0.32),0_0_42px_rgba(249,115,22,0.22)] transition duration-200 hover:-translate-y-0.5 hover:from-amber-400 hover:via-orange-400 hover:to-orange-300 sm:px-9 sm:text-base"
+            >
+              <span aria-hidden>✎</span>
+              Tell Your Story
+              <span aria-hidden>›</span>
+            </Link>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500 sm:text-xs">
+              Or just dive in and see what others are sharing
+            </p>
+          </div>
         </div>
       </section>
 
       {/* FILTERS + FEED */}
-      <section id="feed" className="space-y-4 sm:space-y-5">
-        <div className="flex items-center gap-2">
+      <section id="feed" className="mx-auto max-w-5xl space-y-5 sm:space-y-6">
+        <div className="relative">
           <label className="sr-only" htmlFor="discover-search">
             Search stories
           </label>
@@ -132,8 +112,8 @@ export function DiscoverHome({
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search stories…"
-            className="w-full rounded-full border border-orange-500/20 bg-black/50 px-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-orange-400/50 focus:outline-none"
+            placeholder="Search stories..."
+            className="w-full rounded-full border border-orange-400/25 bg-[#040914]/80 px-5 py-3.5 text-sm text-zinc-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.03),0_10px_30px_rgba(0,0,0,0.18)] placeholder:text-zinc-600 outline-none transition focus:border-orange-400/70 focus:ring-2 focus:ring-orange-400/10"
           />
         </div>
 
@@ -143,20 +123,20 @@ export function DiscoverHome({
           onSelect={setFilter}
         />
 
-        <h2 className="pt-1 text-center text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">
+        <h2 className="pt-2 text-center text-[11px] font-bold uppercase tracking-[0.28em] text-zinc-500">
           {filter === "most-recent"
             ? "Most recent"
             : chips.find((c) => c.id === filter)?.label ?? "Stories"}
         </h2>
 
         {filtered.length === 0 ? (
-          <p className="rounded-3xl border border-white/10 bg-zinc-900/50 p-6 text-center text-sm text-zinc-400">
+          <p className="rounded-3xl border border-orange-400/15 bg-[#080c15]/85 p-6 text-center text-sm text-zinc-400">
             {stories.length === 0
               ? "No published stories yet."
               : "No stories match this filter."}
           </p>
         ) : (
-          <div className="grid gap-3 sm:gap-4">
+          <div className="grid gap-4 sm:gap-5">
             {filtered.map((story, i) => (
               <StoryCard
                 key={story.id}

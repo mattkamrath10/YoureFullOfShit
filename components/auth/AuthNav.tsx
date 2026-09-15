@@ -65,7 +65,7 @@ export function AuthNav() {
     return (
       <Link
         href="/sign-in"
-        className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:bg-white/10"
+        className="rounded-full border border-amber-400/20 bg-white/[0.035] px-3.5 py-1.5 text-xs font-semibold text-zinc-200 transition hover:border-amber-300/45 hover:bg-white/[0.08]"
       >
         Sign In
       </Link>
@@ -93,7 +93,7 @@ export function AuthNav() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 py-1 pl-1 pr-2.5 text-xs font-semibold text-zinc-200 hover:bg-white/10"
+        className="flex items-center gap-2 rounded-full border border-amber-400/20 bg-white/[0.035] py-1 pl-1 pr-2.5 text-xs font-semibold text-zinc-200 transition hover:border-amber-300/45 hover:bg-white/[0.08]"
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label="Account menu"
