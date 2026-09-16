@@ -204,6 +204,13 @@ export function ModerationDashboard({
           Plus
         </button>
       </div>
+      <p className="text-center text-xs text-zinc-500">
+        Full grant tools also live at{" "}
+        <Link href="/admin/plus" className="text-orange-300">
+          /admin/plus
+        </Link>
+        .
+      </p>
 
       {section === "comments" ? (
         <CommentsModerationPanel />

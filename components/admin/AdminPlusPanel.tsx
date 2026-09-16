@@ -8,16 +8,35 @@ type AdminEntitlement = {
   source: string;
   status: string;
   expires_at: string | null;
-  created_at: string;
+  created_at?: string;
+};
+
+type Snapshot = {
+  userId: string;
+  email?: string | null;
+  displayName?: string | null;
+  hasPlus: boolean;
+  storiesSubmittedCount: number;
+  largeVideosThisMonth: number;
+  storageBytes: number;
+  entitlements: Array<{
+    id?: string;
+    source: string;
+    status: string;
+    expiresAt: string | null;
+  }>;
 };
 
 export function AdminPlusPanel() {
   const [email, setEmail] = useState("");
   const [userId, setUserId] = useState("");
   const [duration, setDuration] = useState("30d");
+  const [customExpires, setCustomExpires] = useState("");
+  const [source, setSource] = useState("admin");
   const [notes, setNotes] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [rows, setRows] = useState<AdminEntitlement[]>([]);
+  const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [pending, startTransition] = useTransition();
 
   function reload() {
@@ -31,6 +50,23 @@ export function AdminPlusPanel() {
     reload();
   }, []);
 
+  function lookup() {
+    setMessage(null);
+    startTransition(async () => {
+      const params = new URLSearchParams();
+      if (email.trim()) params.set("email", email.trim());
+      if (userId.trim()) params.set("userId", userId.trim());
+      const res = await fetch(`/api/admin/plus?${params.toString()}`);
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setSnapshot(null);
+        setMessage(body.error ?? "Lookup failed.");
+        return;
+      }
+      setSnapshot(body as Snapshot);
+    });
+  }
+
   function grant() {
     setMessage(null);
     startTransition(async () => {
@@ -41,7 +77,9 @@ export function AdminPlusPanel() {
           email: email.trim() || undefined,
           userId: userId.trim() || undefined,
           duration,
+          expiresAt: duration === "custom" ? customExpires : undefined,
           notes,
+          source,
         }),
       });
       const body = await res.json().catch(() => ({}));
@@ -49,9 +87,10 @@ export function AdminPlusPanel() {
         setMessage(body.error ?? "Grant failed.");
         return;
       }
-      setMessage(`Granted Plus to ${body.userId}.`);
+      setMessage(`Granted ${body.source} Plus to ${body.userId}.`);
       setNotes("");
       reload();
+      lookup();
     });
   }
 
@@ -68,6 +107,7 @@ export function AdminPlusPanel() {
         return;
       }
       reload();
+      if (snapshot) lookup();
     });
   }
 
@@ -78,7 +118,7 @@ export function AdminPlusPanel() {
       </h2>
       <p className="text-center text-xs text-zinc-400">
         Admin/promo only. Does not create Stripe, Apple, or Google billing records.
-        Revoke affects only the admin entitlement row.
+        Revoke affects only the selected admin/promo row.
       </p>
       <div className="grid gap-2 sm:grid-cols-2">
         <input
@@ -94,7 +134,41 @@ export function AdminPlusPanel() {
           className="rounded-2xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white"
         />
       </div>
+      <button
+        type="button"
+        disabled={pending}
+        onClick={lookup}
+        className="w-full rounded-2xl border border-white/15 py-2 text-sm font-semibold text-zinc-200"
+      >
+        Look up usage
+      </button>
+      {snapshot ? (
+        <div className="rounded-2xl border border-amber-400/20 bg-amber-500/5 p-3 text-left text-sm text-zinc-300">
+          <p className="font-semibold text-white">
+            {snapshot.email ?? snapshot.userId} · Plus {snapshot.hasPlus ? "yes" : "no"}
+          </p>
+          <p>Stories submitted: {snapshot.storiesSubmittedCount}</p>
+          <p>Large videos this month: {snapshot.largeVideosThisMonth}</p>
+          <p>Stored media bytes: {snapshot.storageBytes}</p>
+          <ul className="mt-2 space-y-1 text-xs">
+            {snapshot.entitlements.map((row) => (
+              <li key={`${row.source}-${row.id ?? row.expiresAt}`}>
+                {row.source} · {row.status}
+                {row.expiresAt ? ` · ${new Date(row.expiresAt).toLocaleDateString()}` : " · lifetime"}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       <div className="grid gap-2 sm:grid-cols-2">
+        <select
+          value={source}
+          onChange={(e) => setSource(e.target.value)}
+          className="rounded-2xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white"
+        >
+          <option value="admin">source = admin</option>
+          <option value="promo">source = promo</option>
+        </select>
         <select
           value={duration}
           onChange={(e) => setDuration(e.target.value)}
@@ -105,14 +179,23 @@ export function AdminPlusPanel() {
           <option value="90d">90 days</option>
           <option value="1y">1 year</option>
           <option value="lifetime">Lifetime</option>
+          <option value="custom">Custom date</option>
         </select>
-        <input
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Notes (optional)"
-          className="rounded-2xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white"
-        />
       </div>
+      {duration === "custom" ? (
+        <input
+          type="datetime-local"
+          value={customExpires}
+          onChange={(e) => setCustomExpires(e.target.value)}
+          className="w-full rounded-2xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white"
+        />
+      ) : null}
+      <input
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        placeholder="Notes (optional)"
+        className="w-full rounded-2xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white"
+      />
       <button
         type="button"
         disabled={pending}
@@ -129,7 +212,7 @@ export function AdminPlusPanel() {
             className="flex items-center justify-between gap-2 rounded-2xl border border-white/10 bg-black/30 px-3 py-2"
           >
             <span>
-              {row.user_id.slice(0, 8)}… · {row.status}
+              {row.source} · {row.user_id.slice(0, 8)}… · {row.status}
               {row.expires_at ? ` · until ${new Date(row.expires_at).toLocaleDateString()}` : " · lifetime"}
             </span>
             {row.status !== "revoked" ? (

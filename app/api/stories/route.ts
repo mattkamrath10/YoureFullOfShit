@@ -1,11 +1,16 @@
 import { apiError, createUserClientFromRequest, getAuthenticatedUser } from "@/lib/api/auth";
 import { plusErrorMessage } from "@/lib/plus/errors";
 import { isEmailAuthUser } from "@/lib/auth/session";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   const user = await getAuthenticatedUser(request);
   if (!user || !isEmailAuthUser(user)) {
     return apiError("EMAIL_ACCOUNT_REQUIRED", "Create an account to tell your story.", 401);
+  }
+  const limited = rateLimit({ key: `story:${user.id}`, limit: 10, windowMs: 10 * 60_000 });
+  if (!limited.ok) {
+    return apiError("RATE_LIMITED", "Too many story submissions. Try again shortly.", 429);
   }
 
   let body: { title?: unknown; categoryId?: unknown; text?: unknown; isAnonymous?: unknown };

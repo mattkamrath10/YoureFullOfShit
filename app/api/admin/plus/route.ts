@@ -2,26 +2,11 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/stories-admin";
 import { createServiceClient } from "@/lib/supabase/service";
 import { PLUS_PRODUCT_CODE } from "@/lib/plus/rules";
+import { expiresForAdminGrant, canRevokeEntitlementSource } from "@/lib/plus/admin-grant";
+import { getAdminUserSnapshot } from "@/lib/plus/admin-snapshot";
+import type { EntitlementSource } from "@/lib/plus/rules";
 
 export const runtime = "nodejs";
-
-function expiresForDuration(duration: string): Date | null {
-  const now = Date.now();
-  switch (duration) {
-    case "7d":
-      return new Date(now + 7 * 86400000);
-    case "30d":
-      return new Date(now + 30 * 86400000);
-    case "90d":
-      return new Date(now + 90 * 86400000);
-    case "1y":
-      return new Date(now + 365 * 86400000);
-    case "lifetime":
-      return null;
-    default:
-      throw new Error("Invalid duration.");
-  }
-}
 
 async function findUserIdByEmail(service: ReturnType<typeof createServiceClient>, email: string) {
   const normalized = email.trim().toLowerCase();
@@ -35,14 +20,34 @@ async function findUserIdByEmail(service: ReturnType<typeof createServiceClient>
   return null;
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const url = new URL(req.url);
+  const email = url.searchParams.get("email")?.trim() ?? "";
+  const userIdParam = url.searchParams.get("userId")?.trim() ?? "";
   const service = createServiceClient();
+
+  if (email || userIdParam) {
+    let userId = userIdParam;
+    let resolvedEmail: string | null = email || null;
+    if (!userId && email) {
+      const found = await findUserIdByEmail(service, email);
+      if (!found) return NextResponse.json({ error: "No account found for that email." }, { status: 404 });
+      userId = found;
+    }
+    if (!resolvedEmail && userId) {
+      const { data } = await service.auth.admin.getUserById(userId);
+      resolvedEmail = data.user?.email ?? null;
+    }
+    const snapshot = await getAdminUserSnapshot(userId);
+    return NextResponse.json({ ...snapshot, email: resolvedEmail });
+  }
+
   const { data, error } = await service
     .from("entitlements")
     .select("id, user_id, source, status, expires_at, created_at, updated_at")
-    .eq("source", "admin")
+    .in("source", ["admin", "promo"])
     .order("created_at", { ascending: false })
     .limit(50);
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
@@ -57,15 +62,23 @@ export async function POST(req: Request) {
     userId?: string;
     email?: string;
     duration?: string;
+    expiresAt?: string;
     notes?: string;
+    source?: EntitlementSource;
   };
 
-  const duration = body.duration ?? "30d";
+  const source = body.source === "promo" ? "promo" : "admin";
   let expiresAt: Date | null;
   try {
-    expiresAt = expiresForDuration(duration);
-  } catch {
-    return NextResponse.json({ error: "Invalid duration." }, { status: 400 });
+    expiresAt = expiresForAdminGrant({
+      duration: body.duration ?? "30d",
+      customExpiresAt: body.expiresAt,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Invalid duration." },
+      { status: 400 },
+    );
   }
 
   const service = createServiceClient();
@@ -81,7 +94,7 @@ export async function POST(req: Request) {
     .from("entitlements")
     .insert({
       user_id: userId,
-      source: "admin",
+      source,
       status: "active",
       expires_at: expiresAt?.toISOString() ?? null,
       product_code: PLUS_PRODUCT_CODE,
@@ -93,13 +106,13 @@ export async function POST(req: Request) {
   await service.from("entitlement_events").insert({
     entitlement_id: entitlement.id,
     user_id: userId,
-    source: "admin",
+    source,
     action: "granted",
     actor_user_id: admin.userId,
     notes: body.notes?.trim() || null,
   });
 
-  return NextResponse.json({ ok: true, entitlementId: entitlement.id, userId });
+  return NextResponse.json({ ok: true, entitlementId: entitlement.id, userId, source });
 }
 
 export async function DELETE(req: Request) {
@@ -117,21 +130,24 @@ export async function DELETE(req: Request) {
     .maybeSingle();
   if (loadError) return NextResponse.json({ error: loadError.message }, { status: 400 });
   if (!row) return NextResponse.json({ error: "Entitlement not found." }, { status: 404 });
-  if (row.source !== "admin") {
-    return NextResponse.json({ error: "Only admin entitlements can be revoked here." }, { status: 400 });
+  if (!canRevokeEntitlementSource(row.source as EntitlementSource)) {
+    return NextResponse.json(
+      { error: "Only admin or promo entitlements can be revoked here." },
+      { status: 400 },
+    );
   }
 
   const { error } = await service
     .from("entitlements")
     .update({ status: "revoked", updated_at: new Date().toISOString() })
     .eq("id", entitlementId)
-    .eq("source", "admin");
+    .eq("source", row.source);
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 
   await service.from("entitlement_events").insert({
     entitlement_id: entitlementId,
     user_id: row.user_id,
-    source: "admin",
+    source: row.source,
     action: "revoked",
     actor_user_id: admin.userId,
   });

@@ -3,6 +3,7 @@ import { DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { getR2Client } from "@/lib/r2/client";
 import { isR2Configured } from "@/lib/r2/config";
 import { createServiceClient } from "@/lib/supabase/service";
+import { cancelStripeSubscriptionForUser } from "@/lib/billing/stripe/cancel";
 
 /**
  * Deletes the auth user and profile. Entitlements cascade with the profile.
@@ -12,6 +13,10 @@ import { createServiceClient } from "@/lib/supabase/service";
  */
 export async function deleteAccount(userId: string) {
   const service = createServiceClient();
+  const stripeCancel = await cancelStripeSubscriptionForUser(userId);
+  if (stripeCancel.attempted === false && stripeCancel.reason === "STRIPE_NOT_CONFIGURED") {
+    /* Local/dev: no Stripe call is made. */
+  }
   const { data: stories, error: storiesError } = await service.from("stories").select("id").eq("author_id", userId);
   if (storiesError) throw storiesError;
   const ids = (stories ?? []).map((story) => story.id);

@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node --experimental-strip-types --test lib/plus/*.test.ts"
+    "test": "tsx --test lib/plus/*.test.ts lib/billing/stripe/*.test.ts lib/billing/apple/*.test.ts lib/billing/google/*.test.ts lib/native/*.test.ts lib/rate-limit.test.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1131.0",
@@ -20,6 +20,7 @@
     "react-dom": "19.2.8",
     "resend": "^6.28.0",
     "server-only": "^0.0.1",
+    "stripe": "^22.6.2",
     "web-push": "^3.6.7"
   },
   "devDependencies": {
@@ -31,6 +32,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.5",
     "tailwindcss": "^4",
+    "tsx": "^4.23.13",
     "typescript": "^5"
   }
 }

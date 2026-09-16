@@ -1,22 +1,22 @@
 # Last Storyteller guest vs account vs admin access
 
-| Feature | Guest (signed out / anonymous) | Email account (FREE) | Admin |
-|---------|--------------------------------|----------------------|-------|
-| Discover / search / categories | Yes | Yes | Yes |
-| Open / read / watch / listen stories | Yes | Yes | Yes |
-| Storyteller (text listen, device avatar) | Yes (local pref) | Yes (profile + local) | Yes |
-| View public comments | Yes | Yes | Yes |
-| Tell Your Story — text + STT | Yes (moderation queue) | Yes | Yes |
-| Tell Your Story — video/image/audio ≤ 50 MB | Yes — **Supabase only** | Yes — Supabase | Yes |
-| Tell Your Story — video > 50 MB | No — free account prompt | Yes — **R2** (up to 1 GB) | Yes |
-| Like / Unlike | Buttons visible; click → FREE account prompt | Yes | Yes |
-| Comment (post / delete own) | View only; post → prompt | Yes | Yes |
-| Report comment / story | Prompt (account to submit is fine) | Yes | Yes + moderate |
-| Share (Web Share / clipboard) | **Yes** (no sign-in prompt) | Yes | Yes |
-| Follow / Unfollow | Prompt | Yes (non-anon authors) | Yes |
-| Account / profile / avatar / photo add | Prompt on /account | Yes | Yes |
-| My Stories / Edit | Prompt on /my-stories | Yes (own stories) | Yes |
-| Admin moderation | No | No | Yes |
+| Feature | Guest (signed out / anonymous) | Email account (FREE) | Plus | Admin |
+|---------|--------------------------------|----------------------|------|-------|
+| Discover / search / categories | Yes | Yes | Yes | Yes |
+| Open / read / watch / listen stories | Yes | Yes | Yes | Yes |
+| Storyteller (text listen, device avatar) | Yes (local pref) | Yes (profile + local) | Yes | Yes |
+| View public comments | Yes | Yes | Yes | Yes |
+| Tell Your Story | No — create account | First 2 lifetime submissions | Unlimited publishing | Yes |
+| Media ≤ 50 MB (text/images/PDFs/video) | N/A | Yes — Supabase | Yes | Yes |
+| Large video > 50 MB (R2) | No | No | 10/UTC month, 1 GB file, 10 GB stored | Same as Plus if entitled |
+| Like / Unlike | Prompt | Yes | Yes | Yes |
+| Comment | Prompt | Yes | Yes | Yes |
+| Report / block / follow | Prompt | Yes | Yes | Yes |
+| Share | Yes | Yes | Yes | Yes |
+| My Stories | Prompt | Yes | Yes | Yes |
+| Stripe Checkout | No | Web only when configured | Manage via portal | — |
+| Stripe in iOS/Android WebView | No | No | Store IAP later | — |
+| Admin moderation / Plus grants | No | No | No | Yes (`is_admin`) |
 
 Never show raw `42501` / permission denied to users — map to FREE account prompt.
-`ensureUser` anonymous sessions remain OK for guest story/media ownership.
+Guest story insert is blocked by `create_pending_story` after the A0 migration.
