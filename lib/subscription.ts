@@ -1,5 +1,5 @@
 export const PLUS_MONTHLY_PRODUCT_ID = "com.laststoryteller.plus.monthly";
-export const PLUS_INTENDED_US_PRICE = "$0.99/month";
+export const PLUS_INTENDED_US_PRICE = "$1.99/month";
 
 export type AccessTier = "free" | "plus" | "unknown";
 
