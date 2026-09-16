@@ -7,6 +7,7 @@ import { StoryActions } from "@/components/social/StoryActions";
 import { CommentSection } from "@/components/social/CommentSection";
 import { BlockUserButton } from "@/components/social/BlockUserButton";
 import { AppMediaLink } from "@/components/native/AppMediaLink";
+import { StoryVideoPlayer } from "@/components/StoryVideoPlayer";
 
 export function StoryDetail({
   story,
@@ -89,13 +90,7 @@ export function StoryDetail({
           <div className="space-y-4">
             {grouped.videos.map((v) =>
               v.url ? (
-                <video
-                  key={v.id}
-                  src={v.url}
-                  controls
-                  playsInline
-                  className="w-full rounded-2xl bg-black"
-                />
+                <StoryVideoPlayer key={v.id} src={v.url} />
               ) : (
                 <p key={v.id} className="text-center text-sm text-zinc-500">
                   Video unavailable

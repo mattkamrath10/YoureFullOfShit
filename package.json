@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "tsx --test lib/plus/*.test.ts lib/billing/stripe/*.test.ts lib/billing/apple/*.test.ts lib/billing/google/*.test.ts lib/native/*.test.ts lib/rate-limit.test.ts",
+    "test": "tsx --test lib/plus/*.test.ts lib/billing/stripe/*.test.ts lib/billing/apple/*.test.ts lib/billing/google/*.test.ts lib/native/*.test.ts lib/rate-limit.test.ts lib/story-video-load.test.ts",
     "cap:sync": "npx cap sync ios",
     "ios:patch": "node scripts/patch-ios-info.mjs"
   },
