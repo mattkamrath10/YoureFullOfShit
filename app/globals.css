@@ -127,3 +127,18 @@ textarea {
   background: rgba(249, 115, 22, 0.24);
   filter: blur(24px);
 }
+
+@keyframes story-video-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.story-video-spinner {
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 2px solid rgba(251, 191, 36, 0.22);
+  border-top-color: #fbbf24;
+  border-radius: 999px;
+  animation: story-video-spin 0.85s linear infinite;
+}
