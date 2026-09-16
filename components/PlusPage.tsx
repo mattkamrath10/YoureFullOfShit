@@ -139,11 +139,6 @@ export function PlusPage() {
         </p>
       ) : null}
       {message ? <p className="text-sm text-rose-200">{message}</p> : null}
-      <div className="flex justify-center gap-4 text-sm text-zinc-400">
-        <Link href="/privacy">Privacy</Link>
-        <Link href="/terms">Terms</Link>
-        <Link href="/support">Support</Link>
-      </div>
     </div>
   );
 }
