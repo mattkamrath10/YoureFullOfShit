@@ -16,8 +16,9 @@ import {
   type AdminComment,
 } from "@/lib/social/comments-admin";
 import { STATUS_LABELS, type Story, type StoryStatus } from "@/types/database";
+import { AdminPlusPanel } from "@/components/admin/AdminPlusPanel";
 
-type SectionId = "stories" | "comments";
+type SectionId = "stories" | "comments" | "plus";
 type TabId = "pending" | "approved" | "rejected" | "all";
 
 const TABS: { id: TabId; label: string }[] = [
@@ -191,10 +192,23 @@ export function ModerationDashboard({
         >
           Comments
         </button>
+        <button
+          type="button"
+          onClick={() => setSection("plus")}
+          className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-wide transition ${
+            section === "plus"
+              ? "bg-orange-500 text-black"
+              : "border border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
+          }`}
+        >
+          Plus
+        </button>
       </div>
 
       {section === "comments" ? (
         <CommentsModerationPanel />
+      ) : section === "plus" ? (
+        <AdminPlusPanel />
       ) : (
         <>
           {counts.pending > 0 ? (

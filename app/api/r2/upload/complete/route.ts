@@ -1,15 +1,12 @@
 import { NextResponse } from "next/server";
+import { plusErrorMessage } from "@/lib/plus/errors";
 import { requireAuthUser } from "@/lib/r2/auth";
 import { isR2Configured } from "@/lib/r2/config";
 import { completeR2MultipartVideoUpload } from "@/lib/r2/upload";
+import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
-/**
- * POST /api/r2/upload/complete
- * Phase 1 foundation — completes multipart after browser PUTs parts.
- * Does not write story_media yet (Phase 2).
- */
 export async function POST(req: Request) {
   try {
     if (!isR2Configured()) {
@@ -42,6 +39,18 @@ export async function POST(req: Request) {
       uploadId: body.uploadId,
       parts: body.parts,
     });
+
+    const supabase = await createClient();
+    const { error } = await supabase.rpc("complete_r2_upload_log", {
+      p_object_key: body.objectKey,
+    });
+    if (error) {
+      const mapped = plusErrorMessage(error);
+      return NextResponse.json(
+        { error: mapped?.message ?? error.message, code: mapped?.code ?? "LOG_FAILED" },
+        { status: mapped?.status ?? 400 },
+      );
+    }
 
     return NextResponse.json({ ok: true, provider: "r2", ...result });
   } catch (e) {

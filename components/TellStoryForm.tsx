@@ -4,6 +4,7 @@ import { useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { SignInPrompt } from "@/components/social/SignInPrompt";
+import { FreeAccountGate } from "@/components/auth/FreeAccountGate";
 import { submitStory } from "@/lib/submit-story";
 import {
   formatBytes,
@@ -13,9 +14,11 @@ import {
   R2_VIDEO_APP_MAX,
   SUPABASE_VIDEO_MAX,
   GUEST_LARGE_VIDEO_MESSAGE,
+  PLUS_LARGE_VIDEO_MESSAGE,
   type SelectedMedia,
   type MediaUploadProgress,
 } from "@/lib/media";
+import { canSubmitAnotherStory, remainingFreeStories, type PlusUsage } from "@/lib/plus/usage";
 
 import { VideoRecorder, type RecordedVideo } from "@/components/VideoRecorder";
 import { StoryBodyField } from "@/components/StoryBodyField";
@@ -24,7 +27,13 @@ import type { Category } from "@/types/database";
 const TITLE_MAX = 120;
 const BODY_MAX = 20000;
 
-export function TellStoryForm({ categories }: { categories: Category[] }) {
+export function TellStoryForm({
+  categories,
+  usage = null,
+}: {
+  categories: Category[];
+  usage?: PlusUsage | null;
+}) {
   const { isSignedIn, loading: authLoading } = useAuth();
   const [promptOpen, setPromptOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -44,7 +53,10 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
   const [pending, startTransition] = useTransition();
   const uploadAbortRef = useRef<AbortController | null>(null);
 
-  // isSignedIn === email free account (AuthProvider). Guests may still upload ≤50 MB via Supabase.
+  const hasPlus = Boolean(usage?.has_plus);
+  const plusRequired = Boolean(usage && !canSubmitAnotherStory(usage));
+  const freeLeft = usage ? remainingFreeStories(usage) : null;
+
   function promptForLargeGuestVideo(message: string = GUEST_LARGE_VIDEO_MESSAGE) {
     setMediaError(message);
     setPromptOpen(true);
@@ -81,15 +93,15 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
   }, [title, titleCount, categoryId, bodyCount, allMedia.length, isAnonymous, displayName]);
 
   const canSubmit = useMemo(() => {
-    if (pending) return false;
+    if (pending || plusRequired) return false;
     return submitHints.length === 0;
-  }, [pending, submitHints]);
+  }, [pending, submitHints, plusRequired]);
 
   async function prepareAndAddVideo(file: File) {
     if (authLoading) return;
     const mediaType = detectMediaType(file);
     if (mediaType !== "video") {
-      const result = validateMediaFile(file, { emailAuth: isSignedIn });
+      const result = validateMediaFile(file, { emailAuth: isSignedIn, hasPlus });
       if (!result.ok) {
         if (!isSignedIn && file.size > SUPABASE_VIDEO_MAX) {
           promptForLargeGuestVideo(result.error);
@@ -127,7 +139,7 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
       return;
     }
 
-    const result = validateMediaFile(file, { emailAuth: isSignedIn });
+      const result = validateMediaFile(file, { emailAuth: isSignedIn, hasPlus });
     if (!result.ok) {
       if (!isSignedIn && file.size > SUPABASE_VIDEO_MAX) {
         promptForLargeGuestVideo(result.error);
@@ -146,7 +158,7 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
       },
     ]);
 
-    if (isSignedIn && shouldUseR2ForVideo(file)) {
+    if (isSignedIn && hasPlus && shouldUseR2ForVideo(file)) {
       setProcessLabel(
         `Large video selected (${formatBytes(file.size)}). It will upload securely on submit (no compression/split).`,
       );
@@ -175,7 +187,7 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
     setUploadRatio(null);
     setMediaError(null);
     for (const item of allMedia) {
-      const check = validateMediaFile(item.file, { emailAuth: isSignedIn });
+      const check = validateMediaFile(item.file, { emailAuth: isSignedIn, hasPlus });
       if (!check.ok) {
         setMediaError(check.error);
         setError(check.error);
@@ -241,11 +253,7 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
         {!isSignedIn && (
           <div className="mx-auto max-w-md space-y-3 rounded-2xl border border-orange-400/30 bg-orange-500/10 p-4">
             <p className="text-sm font-bold text-orange-100">
-              Create a FREE account to edit this story and track it in My Stories.
-            </p>
-            <p className="text-xs text-zinc-400">
-              Guests can submit text and video up to 50 MB. A free account unlocks
-              edit, My Stories, likes, comments, and larger videos.
+              Create a FREE account to track this story in My Stories.
             </p>
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
               <Link
@@ -290,6 +298,17 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
     );
   }
 
+  if (!authLoading && !isSignedIn) {
+    return (
+      <FreeAccountGate
+        title="Tell your story"
+        subtitle="Create a free account to submit stories. Browsing stays public without signing in."
+      >
+        <span className="sr-only">Account required</span>
+      </FreeAccountGate>
+    );
+  }
+
   return (
     <>
       <form onSubmit={onSubmit} className="space-y-6">
@@ -304,6 +323,26 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
             Type or speak it. Record video separately. Add evidence if you want.
             The community decides what they believe.
           </p>
+          {usage && !hasPlus ? (
+            <p className="mx-auto max-w-xl rounded-2xl border border-white/10 bg-black/30 px-4 py-2 text-sm text-zinc-300">
+              {plusRequired
+                ? "You have used both free story submissions. Last Storyteller Plus ($1.99/month) is required to keep publishing."
+                : `${freeLeft} free ${freeLeft === 1 ? "submission" : "submissions"} remaining.`}
+            </p>
+          ) : null}
+          {hasPlus ? (
+            <p className="mx-auto max-w-xl rounded-2xl border border-amber-400/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-100">
+              Plus is active. Large videos: {usage?.large_videos_this_month ?? 0}/10 this month.
+            </p>
+          ) : null}
+          {plusRequired ? (
+            <Link
+              href="/plus"
+              className="inline-flex rounded-full bg-orange-500 px-5 py-2.5 text-sm font-black uppercase tracking-wide text-black"
+            >
+              See Last Storyteller Plus
+            </Link>
+          ) : null}
         </section>
 
         <div className="space-y-5 rounded-3xl border border-white/10 bg-zinc-900/70 p-4 sm:p-7">
@@ -393,8 +432,9 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
               </h2>
               <p className="mt-1 text-sm text-zinc-400">
                 Separate from typing/speaking above. Record video evidence. Max 5
-                minutes. Guests: up to 50 MB via Supabase. Free accounts: larger
-                recordings upload securely on submit (no compression).
+                Separate from typing/speaking above. Record video evidence. Max 5
+                minutes. Free accounts: video up to 50 MB. Plus: large videos up to 1 GB
+                (10 per month).
               </p>
             </div>
             {recorded ? (
@@ -450,11 +490,11 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
                 Upload photos, videos, or documents you already have. Optional.
               </p>
               <p className="mt-1 text-xs text-zinc-500">
-                Images ≤ 10 MB · Guests: video ≤ 50 MB (Supabase) · Free account: videos over 50 MB via R2 (up to 1 GB) · PDFs ≤ 20 MB
+                Images ≤ 10 MB · Free: video ≤ 50 MB · Plus: large video via R2 up to 1 GB · PDFs ≤ 20 MB
               </p>
-              {!isSignedIn && (
+              {isSignedIn && !hasPlus && (
                 <p className="mt-2 rounded-2xl border border-sky-400/30 bg-sky-500/10 px-3 py-2 text-sm text-sky-100">
-                  Guests can attach video up to 50 MB. Larger videos need a free account.
+                  {PLUS_LARGE_VIDEO_MESSAGE}
                 </p>
               )}
             </div>
@@ -615,7 +655,7 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
           setRecorderOpen(false);
           void (async () => {
             if (authLoading) return;
-            const check = validateMediaFile(video.file, { emailAuth: isSignedIn });
+            const check = validateMediaFile(video.file, { emailAuth: isSignedIn, hasPlus });
             if (!check.ok) {
               setMediaError(check.error);
               setError(check.error);
@@ -624,7 +664,7 @@ export function TellStoryForm({ categories }: { categories: Category[] }) {
               }
               return;
             }
-            if (isSignedIn && shouldUseR2ForVideo(video.file)) {
+            if (isSignedIn && hasPlus && shouldUseR2ForVideo(video.file)) {
               setRecorded(null);
               await prepareAndAddVideo(video.file);
               return;

@@ -20,8 +20,7 @@ export async function requireAuthUser(): Promise<{ id: string; user: User }> {
   if (!isEmailAuthUser(data.user)) {
     throw new Response(
       JSON.stringify({
-        error:
-          "A free account is required for large video uploads. Guests can upload videos up to 50 MB.",
+        error: "Create an account to tell your story. Large-video uploads require Last Storyteller Plus.",
         code: "EMAIL_ACCOUNT_REQUIRED",
       }),
       {

@@ -1,8 +1,8 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { ensureUser } from "@/lib/votes";
 import { isEmailAuthUser } from "@/lib/auth/session";
+import { plusErrorMessage } from "@/lib/plus/errors";
 import {
   GUEST_LARGE_VIDEO_MESSAGE,
   GUEST_UPLOAD_MAX,
@@ -33,7 +33,6 @@ function makePreview(body: string, title: string): string {
   return t.length <= 160 ? t : `${t.slice(0, 157).trim()}...`;
 }
 
-/** Fire-and-forget admin email. Never throws; never blocks submit success. */
 function notifyAdminsNewStory(storyId: string): void {
   void fetch("/api/admin/notify-new-story", {
     method: "POST",
@@ -59,20 +58,21 @@ export async function submitStory(input: SubmitStoryInput) {
   }
   if (body.length > 20000) throw new Error("Story must be 20,000 characters or fewer.");
 
-  // ensureUser may create/keep an anonymous session for guest ownership — that is OK.
-  const user = await ensureUser();
-  const emailAuth = isEmailAuthUser(user);
+  const supabase = createClient();
+  const { data: authData } = await supabase.auth.getUser();
+  const sessionUser = authData.user;
+  if (!sessionUser || !isEmailAuthUser(sessionUser)) {
+    throw new Error("Create an account to tell your story.");
+  }
+  const user = sessionUser;
 
   for (const item of input.media) {
-    const check = validateMediaFile(item.file, { emailAuth });
+    const check = validateMediaFile(item.file, { emailAuth: true });
     if (!check.ok) throw new Error(check.error);
-    // Defense in depth: guests/anonymous never exceed 50 MB (no R2).
-    if (!emailAuth && item.file.size > GUEST_UPLOAD_MAX) {
+    if (item.file.size > GUEST_UPLOAD_MAX && item.mediaType !== "video") {
       throw new Error(GUEST_LARGE_VIDEO_MESSAGE);
     }
   }
-
-  const supabase = createClient();
 
   if (!input.isAnonymous) {
     const name = (input.displayName ?? "").trim();
@@ -85,24 +85,21 @@ export async function submitStory(input: SubmitStoryInput) {
     if (profileError) throw profileError;
   }
 
-  const { data, error } = await supabase
-    .from("stories")
-    .insert({
-      author_id: user.id,
-      category_id: categoryId,
-      title,
-      body,
-      preview: makePreview(body, title),
-      is_demo: false,
-      is_published: false,
-      status: "pending",
-      is_anonymous: input.isAnonymous,
-    })
-    .select("id")
-    .single();
+  const { data, error } = await supabase.rpc("create_pending_story", {
+    p_category_id: categoryId,
+    p_title: title,
+    p_body: body,
+    p_preview: makePreview(body, title),
+    p_is_anonymous: input.isAnonymous,
+  });
 
-  if (error) throw error;
-  const storyId = data.id as string;
+  if (error) {
+    const mapped = plusErrorMessage(error);
+    throw new Error(mapped?.message ?? error.message);
+  }
+
+  const storyId = data as string;
+  if (!storyId) throw new Error("Could not create story.");
 
   if (input.media.length > 0) {
     await uploadStoryMedia({
@@ -114,8 +111,6 @@ export async function submitStory(input: SubmitStoryInput) {
     });
   }
 
-  // After successful pending create (+ media). Email failure must not affect this return.
   notifyAdminsNewStory(storyId);
-
   return storyId;
 }

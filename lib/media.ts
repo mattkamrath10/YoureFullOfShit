@@ -26,7 +26,10 @@ export const GUEST_UPLOAD_MAX = 50 * 1024 * 1024;
 export const R2_VIDEO_APP_MAX = 1024 * 1024 * 1024;
 
 export const GUEST_LARGE_VIDEO_MESSAGE =
-  "Guests can attach video up to 50 MB. Create a free account for larger videos (up to 1 GB).";
+  "Create an account to tell your story. Videos over 50 MB also require Last Storyteller Plus.";
+
+export const PLUS_LARGE_VIDEO_MESSAGE =
+  "Videos over 50 MB require Last Storyteller Plus ($1.99/month). Free submissions can include text, images, PDFs, and video up to 50 MB.";
 
 export const LIMITS = {
   image: 10 * 1024 * 1024,
@@ -57,6 +60,8 @@ export function shouldUseR2ForVideo(file: File): boolean {
 export type ValidateMediaOptions = {
   /** True when the session is a real email free account (not guest/anonymous). */
   emailAuth?: boolean;
+  /** Plus is required for R2 / videos over 50 MB. */
+  hasPlus?: boolean;
 };
 
 export function validateMediaFile(
@@ -64,6 +69,7 @@ export function validateMediaFile(
   opts?: ValidateMediaOptions,
 ): { ok: true; mediaType: MediaType } | { ok: false; error: string } {
   const emailAuth = Boolean(opts?.emailAuth);
+  const hasPlus = Boolean(opts?.hasPlus);
   const mediaType = detectMediaType(file);
   if (!mediaType) {
     return {
@@ -72,13 +78,10 @@ export function validateMediaFile(
     };
   }
 
-  if (!emailAuth && file.size > GUEST_UPLOAD_MAX) {
-    if (mediaType === "video") {
-      return { ok: false, error: GUEST_LARGE_VIDEO_MESSAGE };
-    }
+  if (!emailAuth) {
     return {
       ok: false,
-      error: `${file.name}: guests can upload files up to 50 MB. Create a free account for larger uploads.`,
+      error: "Create an account to tell your story.",
     };
   }
 
@@ -86,15 +89,15 @@ export function validateMediaFile(
     mediaType === "image"
       ? LIMITS.image
       : mediaType === "video"
-        ? emailAuth
+        ? hasPlus
           ? LIMITS.video
           : SUPABASE_VIDEO_MAX
         : LIMITS.document;
 
   if (file.size > limit) {
     if (mediaType === "video") {
-      if (!emailAuth) {
-        return { ok: false, error: GUEST_LARGE_VIDEO_MESSAGE };
+      if (!hasPlus) {
+        return { ok: false, error: PLUS_LARGE_VIDEO_MESSAGE };
       }
       return {
         ok: false,
@@ -163,8 +166,8 @@ export async function uploadStoryMedia(args: {
     }
 
     const useR2 = emailAuth && shouldUseR2ForVideo(item.file);
-    if (!emailAuth && shouldUseR2ForVideo(item.file)) {
-      throw new Error(GUEST_LARGE_VIDEO_MESSAGE);
+    if (useR2) {
+      /* Server reserve_r2_upload enforces Plus. Free users receive plus_required. */
     }
 
     args.onProgress?.({

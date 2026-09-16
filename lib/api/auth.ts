@@ -3,6 +3,21 @@ import "server-only";
 import { createClient as createSupabaseClient, type User } from "@supabase/supabase-js";
 import { createClient as createCookieClient } from "@/lib/supabase/server";
 
+/** Cookie session or Bearer JWT — RPCs see auth.uid() from this client. */
+export async function createUserClientFromRequest(request: Request) {
+  const authorization = request.headers.get("authorization");
+  const token = authorization?.match(/^Bearer\s+(.+)$/i)?.[1];
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (token && url && key) {
+    return createSupabaseClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    });
+  }
+  return createCookieClient();
+}
+
 export async function getAuthenticatedUser(request: Request): Promise<User | null> {
   const authorization = request.headers.get("authorization");
   const token = authorization?.match(/^Bearer\s+(.+)$/i)?.[1];

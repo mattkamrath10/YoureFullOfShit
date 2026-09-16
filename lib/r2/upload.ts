@@ -23,6 +23,8 @@ export type CreateR2MultipartUploadInput = {
   fileName: string;
   mimeType: string;
   byteSize: number;
+  /** When provided, quota reservation already chose this key — do not build another. */
+  objectKey?: string;
 };
 
 export type CreateR2MultipartUploadResult = {
@@ -55,11 +57,16 @@ export async function createR2MultipartVideoUpload(
     );
   }
 
-  const objectKey = buildR2VideoObjectKey({
-    storyId: input.storyId,
-    ownerId: input.ownerId,
-    originalFileName: input.fileName,
-  });
+  const objectKey =
+    input.objectKey ??
+    buildR2VideoObjectKey({
+      storyId: input.storyId,
+      ownerId: input.ownerId,
+      originalFileName: input.fileName,
+    });
+  if (input.objectKey) {
+    assertObjectKeyShape(objectKey);
+  }
 
   const { client } = getR2Client();
   const contentType = input.mimeType.toLowerCase().split(";")[0]!.trim();
@@ -69,7 +76,6 @@ export async function createR2MultipartVideoUpload(
       Bucket: config.bucketName,
       Key: objectKey,
       ContentType: contentType,
-      // Helps later lifecycle / debugging
       Metadata: {
         storyid: input.storyId,
         ownerid: input.ownerId,
@@ -81,30 +87,43 @@ export async function createR2MultipartVideoUpload(
     throw new Error("R2 did not return an upload id.");
   }
 
-  const partCount = Math.max(1, Math.ceil(input.byteSize / R2_MULTIPART_PART_SIZE));
-  const expiresInSeconds = 60 * 60; // 1 hour to complete large uploads
-  const parts: Array<{ partNumber: number; url: string }> = [];
+  try {
+    const partCount = Math.max(1, Math.ceil(input.byteSize / R2_MULTIPART_PART_SIZE));
+    const expiresInSeconds = 60 * 60;
+    const parts: Array<{ partNumber: number; url: string }> = [];
 
-  for (let partNumber = 1; partNumber <= partCount; partNumber++) {
-    const command = new UploadPartCommand({
-      Bucket: config.bucketName,
-      Key: objectKey,
-      UploadId: created.UploadId,
-      PartNumber: partNumber,
-    });
-    const url = await getSignedUrl(client, command, { expiresIn: expiresInSeconds });
-    parts.push({ partNumber, url });
+    for (let partNumber = 1; partNumber <= partCount; partNumber++) {
+      const command = new UploadPartCommand({
+        Bucket: config.bucketName,
+        Key: objectKey,
+        UploadId: created.UploadId,
+        PartNumber: partNumber,
+      });
+      const url = await getSignedUrl(client, command, { expiresIn: expiresInSeconds });
+      parts.push({ partNumber, url });
+    }
+
+    return {
+      bucket: config.bucketName,
+      objectKey,
+      uploadId: created.UploadId,
+      partSize: R2_MULTIPART_PART_SIZE,
+      partCount,
+      parts,
+      expiresInSeconds,
+    };
+  } catch (error) {
+    await client
+      .send(
+        new AbortMultipartUploadCommand({
+          Bucket: config.bucketName,
+          Key: objectKey,
+          UploadId: created.UploadId,
+        }),
+      )
+      .catch(() => undefined);
+    throw error;
   }
-
-  return {
-    bucket: config.bucketName,
-    objectKey,
-    uploadId: created.UploadId,
-    partSize: R2_MULTIPART_PART_SIZE,
-    partCount,
-    parts,
-    expiresInSeconds,
-  };
 }
 
 export async function completeR2MultipartVideoUpload(args: {

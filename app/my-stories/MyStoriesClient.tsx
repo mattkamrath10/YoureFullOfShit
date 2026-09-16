@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { FreeAccountGate } from "@/components/auth/FreeAccountGate";
 import { StoryDeleteButton } from "@/components/StoryDeleteButton";
+import { remainingFreeStories, type PlusUsage } from "@/lib/plus/usage";
+import { formatBytes } from "@/lib/media";
 
 export type MyStoryRow = {
   id: string;
@@ -36,7 +38,13 @@ function statusTone(status: string): string {
   }
 }
 
-export function MyStoriesClient({ stories }: { stories: MyStoryRow[] }) {
+export function MyStoriesClient({
+  stories,
+  usage = null,
+}: {
+  stories: MyStoryRow[];
+  usage?: PlusUsage | null;
+}) {
   return (
     <FreeAccountGate
       title="My Stories"
@@ -52,6 +60,25 @@ export function MyStoriesClient({ stories }: { stories: MyStoryRow[] }) {
             Track review status for every story you submit.
           </p>
         </section>
+
+        {usage ? (
+          <section className="grid gap-2 rounded-3xl border border-white/10 bg-zinc-900/60 p-4 text-center text-sm text-zinc-300 sm:grid-cols-2">
+            <p>
+              Lifetime stories used:{" "}
+              <span className="font-semibold text-white">{usage.stories_submitted_count}</span>
+            </p>
+            <p>
+              {usage.has_plus
+                ? "Plus is active — publishing can continue."
+                : `Free submissions remaining: ${remainingFreeStories(usage)}`}
+            </p>
+            <p>
+              Large videos this month: {usage.large_videos_this_month}/
+              {usage.large_videos_per_month}
+            </p>
+            <p>Stored media: {formatBytes(usage.storage_bytes)} / 10 GB</p>
+          </section>
+        ) : null}
 
         {stories.length === 0 ? (
           <p className="rounded-3xl border border-white/10 bg-zinc-900/60 p-6 text-center text-sm text-zinc-400">

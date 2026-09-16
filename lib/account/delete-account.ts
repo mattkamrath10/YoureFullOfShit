@@ -4,6 +4,12 @@ import { getR2Client } from "@/lib/r2/client";
 import { isR2Configured } from "@/lib/r2/config";
 import { createServiceClient } from "@/lib/supabase/service";
 
+/**
+ * Deletes the auth user and profile. Entitlements cascade with the profile.
+ * A later account with a new user id is a new identity (fresh free allowance).
+ * Prevents lingering Plus on this user id. Does not rewrite lifetime counters
+ * for this user — the row is removed with the profile.
+ */
 export async function deleteAccount(userId: string) {
   const service = createServiceClient();
   const { data: stories, error: storiesError } = await service.from("stories").select("id").eq("author_id", userId);
