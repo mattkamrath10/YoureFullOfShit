@@ -4,6 +4,13 @@ export function plusErrorMessage(error: { message?: string; code?: string } | nu
   message: string;
 } | null {
   const raw = `${error?.message ?? ""} ${error?.code ?? ""}`.toLowerCase();
+  if (raw.includes("email_unconfirmed")) {
+    return {
+      status: 403,
+      code: "EMAIL_UNCONFIRMED",
+      message: "Confirm your email before telling a story.",
+    };
+  }
   if (raw.includes("email_account_required")) {
     return {
       status: 401,

@@ -11,7 +11,7 @@ import {
 import { isNativeShellWindow } from "@/lib/native/platform";
 
 export function PlusPage() {
-  const { isSignedIn, loading } = useAuth();
+  const { isSignedIn, loading, user } = useAuth();
   const [native, setNative] = useState(false);
   const [stripeConfigured, setStripeConfigured] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -90,11 +90,7 @@ export function PlusPage() {
           Sign in
         </Link>
       ) : native ? (
-        <p className="rounded-2xl border border-amber-400/30 bg-amber-500/10 p-4 text-sm text-amber-100">
-          In the iOS or Android app, Plus is purchased with the store account on this
-          device. Web Stripe Checkout is not offered here. Restore Purchases will be
-          available when StoreKit is configured.
-        </p>
+        <NativePlusActions userId={user?.id ?? null} busy={busy} setBusy={setBusy} setMessage={setMessage} />
       ) : stripeConfigured ? (
         <div className="flex flex-col items-center gap-3">
           <button
@@ -128,6 +124,86 @@ export function PlusPage() {
         <Link href="/support">Support</Link>
       </div>
     </main>
+  );
+}
+
+function NativePlusActions({
+  userId,
+  busy,
+  setBusy,
+  setMessage,
+}: {
+  userId: string | null;
+  busy: boolean;
+  setBusy: (v: boolean) => void;
+  setMessage: (v: string | null) => void;
+}) {
+  async function sendToServer(signedTransaction: string) {
+    const res = await fetch("/api/billing/apple/transactions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ signedTransaction }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error ?? "Apple verification failed.");
+  }
+
+  async function buy() {
+    if (!userId) {
+      setMessage("Sign in with your Last Storyteller account first.");
+      return;
+    }
+    setBusy(true);
+    setMessage(null);
+    try {
+      const PlusStore = (await import("@/lib/native/plus-store")).default;
+      const result = await PlusStore.purchase({ appAccountToken: userId });
+      await sendToServer(result.signedTransaction);
+      setMessage("Plus is now active on this Last Storyteller account.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Purchase failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function restore() {
+    setBusy(true);
+    setMessage(null);
+    try {
+      const PlusStore = (await import("@/lib/native/plus-store")).default;
+      const result = await PlusStore.restore();
+      await sendToServer(result.signedTransaction);
+      setMessage("Purchases restored.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Restore failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <p className="max-w-md text-sm text-zinc-400">
+        iOS uses Apple In-App Purchase. Stripe Checkout is not available in this app.
+      </p>
+      <button
+        type="button"
+        disabled={busy || !userId}
+        onClick={() => void buy()}
+        className="rounded-full bg-orange-500 px-6 py-3 font-black uppercase text-black disabled:opacity-40"
+      >
+        Subscribe with Apple
+      </button>
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => void restore()}
+        className="text-sm font-semibold text-amber-200"
+      >
+        Restore Purchases
+      </button>
+    </div>
   );
 }
 

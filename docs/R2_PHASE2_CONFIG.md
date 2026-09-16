@@ -9,7 +9,7 @@ Do **not** recreate or rename the existing R2 bucket. The example name below is 
 2. Verify its R2 API token has Object Read & Write on that bucket.
 3. Note Account ID, Access Key ID, Secret Access Key.
 4. Apply `docs/R2_CORS.example.json`. It includes `https://laststoryteller.com` and `https://www.laststoryteller.com`; `OPTIONS` preflights are handled automatically by R2 from this CORS policy.
-5. Optional: incomplete multipart lifecycle abort after 7 days.
+5. Incomplete multipart abort: **1 day** (required so failed large-video uploads cannot linger). Reservations older than 2 hours are also released in SQL.
 
 ## 2) Local env (`.env.local` — do not paste values in chat)
 ```

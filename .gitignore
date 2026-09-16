@@ -26,12 +26,18 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 *.pem
+*.p8
 
 # typescript
 next-env.d.ts
 *.tsbuildinfo
 
-# local apply junk (do not deploy)
+# Capacitor / iOS (commit ios/; ignore CocoaPods + build output)
+ios/App/Pods/
+ios/App/build/
+ios/App/App/public/
+ios/DerivedData/
+*.ipa
 *.tar.gz
 APPLY*.ps1
 APPLY.txt

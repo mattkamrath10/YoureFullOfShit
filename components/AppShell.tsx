@@ -12,7 +12,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-dvh bg-[#030914] text-zinc-100">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_50%_-10%,_rgba(180,83,9,0.14),_transparent_34%),radial-gradient(ellipse_at_50%_38%,_rgba(11,32,66,0.34),_transparent_48%)]" />
-      <header className="sticky top-0 z-40 border-b border-amber-400/20 bg-[#040812]/85 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-amber-400/20 bg-[#040812]/85 pt-[max(0px,env(safe-area-inset-top))] backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
           <Link
             href="/"

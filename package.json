@@ -6,15 +6,23 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "tsx --test lib/plus/*.test.ts lib/billing/stripe/*.test.ts lib/billing/apple/*.test.ts lib/billing/google/*.test.ts lib/native/*.test.ts lib/rate-limit.test.ts"
+    "test": "tsx --test lib/plus/*.test.ts lib/billing/stripe/*.test.ts lib/billing/apple/*.test.ts lib/billing/google/*.test.ts lib/native/*.test.ts lib/rate-limit.test.ts",
+    "cap:sync": "npx cap sync ios",
+    "ios:patch": "node scripts/patch-ios-info.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1131.0",
     "@aws-sdk/s3-request-presigner": "^3.1131.0",
+    "@capacitor/browser": "^8.0.4",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/ios": "^8.5.2",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.3",
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.116.0",
+    "jose": "^6.2.12",
     "next": "16.3.5",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -24,6 +32,7 @@
     "web-push": "^3.6.7"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.5.2",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

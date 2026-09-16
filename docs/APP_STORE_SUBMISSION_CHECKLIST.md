@@ -1,19 +1,21 @@
 # App Store submission checklist
 
-## Implemented in the web app
-- [x] Public Privacy Policy: `https://laststoryteller.com/privacy`
-- [x] Terms, Community Guidelines, and Support pages with published contact
-- [x] Story/comment reporting and pre-publication story moderation
-- [x] Account-deletion initiation and media cleanup flow
-- [x] No paid digital purchases or subscriptions found
+## Implemented
+- [x] Privacy / Terms / Support URLs on laststoryteller.com
+- [x] Reporting, moderation, account deletion
+- [x] Capacitor iOS shell, bundle `com.laststoryteller.app`, Codemagic TestFlight upload
+- [x] StoreKit 2 plugin (`PlusStore`) + server JWS verification for `source=apple`
+- [x] Stripe Checkout hidden in the native app
+- [x] iPad: `preferredContentMode: automatic`, responsive viewport, safe-area header
+- [x] Subscription copy: Last Storyteller Plus $1.99/month (`com.laststoryteller.plus.monthly`)
+- [x] Listing draft: `store/app-store/listing.json`
 
-## Manual verification required
-- [ ] Verify production report moderation response times and escalation process
-- [ ] Verify R2/Supabase deletion cleanup using a non-production test account
-- [ ] Complete App Privacy questionnaire from `APP_STORE_PRIVACY_DATA_MAP.md`
-- [ ] Set App Store metadata, screenshots, age-rating answers, content rights, export compliance, support URL, and privacy URL
-- [ ] Provide a reviewer test account or a reliable email-verification path
-- [ ] Confirm the deployed Render service and Supabase/R2 environments are available
-
-## Native wrapper required before App Store submission
-This repository has no Capacitor or iOS project. Codemagic cannot produce an iOS App Store build until a native wrapper, bundle identifier, signing configuration, and Codemagic configuration are added. At that time, audit included native SDKs and add only required `Info.plist` permission strings and `PrivacyInfo.xcprivacy` declarations.
+## You must complete in Apple / Codemagic / Stripe dashboards
+- [ ] App Store Connect: subscription group + product `com.laststoryteller.plus.monthly` at $1.99/month
+- [ ] Paid Applications Agreement, banking, tax
+- [ ] Screenshots (iPhone + iPad)
+- [ ] Age rating, App Privacy questionnaire (`docs/APP_STORE_PRIVACY_DATA_MAP.md`)
+- [ ] Reviewer demo account (confirmed email)
+- [ ] Codemagic: run **Last Storyteller iOS** (integration **Last Storyteller Codemagic**)
+- [ ] Stripe test-mode product/price + webhook (web only)
+- [ ] Apply Supabase migrations A0, S1, X on production after review

@@ -1,0 +1,65 @@
+workflows:
+  last-storyteller-ios:
+    name: Last Storyteller iOS
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+    integrations:
+      # Dedicated Apple Developer Portal / App Store Connect API key.
+      # Must match the Codemagic integration name exactly (spaces included).
+      app_store_connect: "Last Storyteller Codemagic"
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.laststoryteller.app
+      vars:
+        XCODE_WORKSPACE: App.xcworkspace
+        XCODE_SCHEME: App
+        MARKETING_VERSION: "0.1.0"
+        NODE_VERSION: "20"
+        # Existing App Store Connect app. Do not create a second app.
+        APP_STORE_APPLE_ID: "6812527848"
+      node: 20
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Install npm dependencies
+        script: |
+          npm ci
+      - name: Add iOS platform if missing
+        script: |
+          if [ ! -d "ios/App" ]; then
+            npx cap add ios
+          fi
+      - name: Sync Capacitor iOS
+        script: |
+          npx cap sync ios
+      - name: Patch iOS Info.plist, privacy manifest, and App Icon
+        script: |
+          node scripts/patch-ios-info.mjs
+      - name: Install CocoaPods
+        script: |
+          cd ios/App
+          pod install
+      - name: Set marketing version and build number
+        script: |
+          cd ios/App
+          agvtool new-marketing-version "$MARKETING_VERSION"
+          agvtool new-version -all "$BUILD_NUMBER"
+      - name: Set up code signing
+        script: |
+          xcode-project use-profiles
+      - name: Build signed IPA
+        script: |
+          cd ios/App
+          xcode-project build-ipa \
+            --workspace "$XCODE_WORKSPACE" \
+            --scheme "$XCODE_SCHEME"
+    artifacts:
+      - ios/App/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        # Upload to TestFlight. Do not submit for App Store review.
+        submit_to_testflight: true
+        submit_to_app_store: false

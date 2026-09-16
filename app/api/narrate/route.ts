@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getOpenAiVoice } from "@/lib/narrators";
 
@@ -6,6 +7,9 @@ export const dynamic = "force-dynamic";
 
 const MAX_CHARS = 4000;
 const DEFAULT_MODEL = "tts-1-hd";
+const ttsCache = new Map<string, { body: ArrayBuffer; at: number }>();
+const TTS_CACHE_MAX = 50;
+const TTS_CACHE_MS = 6 * 60 * 60 * 1000;
 
 type NarrateBody = {
   text?: unknown;
@@ -48,6 +52,18 @@ export async function POST(request: Request) {
     typeof payload.narratorId === "string" ? payload.narratorId : "";
   const voice = getOpenAiVoice(narratorId);
   const model = process.env.OPENAI_TTS_MODEL?.trim() || DEFAULT_MODEL;
+  const cacheKey = createHash("sha256").update(`${model}:${voice}:${text}`).digest("hex");
+  const cached = ttsCache.get(cacheKey);
+  if (cached && Date.now() - cached.at < TTS_CACHE_MS) {
+    return new NextResponse(cached.body, {
+      status: 200,
+      headers: {
+        "Content-Type": "audio/mpeg",
+        "Cache-Control": "private, max-age=3600",
+        "X-TTS-Cache": "hit",
+      },
+    });
+  }
 
   let openaiResponse: Response;
   try {
@@ -86,11 +102,17 @@ export async function POST(request: Request) {
   }
 
   const audioBuffer = await openaiResponse.arrayBuffer();
+  ttsCache.set(cacheKey, { body: audioBuffer, at: Date.now() });
+  if (ttsCache.size > TTS_CACHE_MAX) {
+    const first = ttsCache.keys().next().value;
+    if (first) ttsCache.delete(first);
+  }
   return new NextResponse(audioBuffer, {
     status: 200,
     headers: {
       "Content-Type": "audio/mpeg",
-      "Cache-Control": "no-store",
+      "Cache-Control": "private, max-age=3600",
+      "X-TTS-Cache": "miss",
     },
   });
 }

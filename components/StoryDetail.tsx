@@ -6,6 +6,7 @@ import { StoryDeleteButton } from "@/components/StoryDeleteButton";
 import { StoryActions } from "@/components/social/StoryActions";
 import { CommentSection } from "@/components/social/CommentSection";
 import { BlockUserButton } from "@/components/social/BlockUserButton";
+import { AppMediaLink } from "@/components/native/AppMediaLink";
 
 export function StoryDetail({
   story,
@@ -113,11 +114,9 @@ export function StoryDetail({
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {grouped.images.map((img) =>
               img.url ? (
-                <a
+                <AppMediaLink
                   key={img.id}
                   href={img.url}
-                  target="_blank"
-                  rel="noreferrer"
                   className="block overflow-hidden rounded-2xl border border-white/10"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -126,7 +125,7 @@ export function StoryDetail({
                     alt={img.file_name ?? "Story photo"}
                     className="h-auto w-full object-cover"
                   />
-                </a>
+                </AppMediaLink>
               ) : null,
             )}
           </div>
@@ -142,14 +141,12 @@ export function StoryDetail({
             {grouped.documents.map((doc) => (
               <li key={doc.id} className="text-center">
                 {doc.url ? (
-                  <a
+                  <AppMediaLink
                     href={doc.url}
-                    target="_blank"
-                    rel="noreferrer"
                     className="inline-flex rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-orange-300"
                   >
                     Open {doc.file_name ?? "document"}
-                  </a>
+                  </AppMediaLink>
                 ) : (
                   <span className="text-sm text-zinc-500">
                     {doc.file_name ?? "Document"} unavailable

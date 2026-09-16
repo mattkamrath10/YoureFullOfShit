@@ -1,0 +1,23 @@
+{
+  "name": "Last Storyteller",
+  "subtitle": "Every story deserves to be told",
+  "bundleId": "com.laststoryteller.app",
+  "appleId": "6812527848",
+  "version": "0.1.0",
+  "privacyPolicy": "https://laststoryteller.com/privacy",
+  "supportUrl": "https://laststoryteller.com/support",
+  "marketingUrl": "https://laststoryteller.com",
+  "category": "Entertainment",
+  "subscription": {
+    "productId": "com.laststoryteller.plus.monthly",
+    "displayName": "Last Storyteller Plus",
+    "price": "$1.99/month",
+    "reviewNotes": "Plus lets accounts keep publishing after two free submissions and upload large videos (10/month UTC, 1 GB each, 10 GB stored). Community features stay free. Sign in with the reviewer Last Storyteller email account before purchasing. Restore Purchases is on the Plus screen. Web Stripe Checkout is hidden in the iOS app."
+  },
+  "description": "Last Storyteller is where people tell true stories and the community decides what they believe.\n\nBrowse, watch, listen, and share without an account. Create a free account to tell your story, comment, like, follow, and report.\n\nEach account includes two lifetime story submissions with photos, PDFs, and video up to 50 MB. Last Storyteller Plus ($1.99/month) lets you keep publishing and upload large videos.\n\nPlus is purchased with Apple In-App Purchase in this app.",
+  "keywords": "stories,true stories,community,video stories,storytelling",
+  "whatsNew": "Plus membership, story limits, and In-App Purchase.",
+  "exportCompliance": {
+    "usesNonExemptEncryption": false
+  }
+}
