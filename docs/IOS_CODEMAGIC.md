@@ -11,7 +11,7 @@ the web app.
 | Bundle ID | `com.laststoryteller.app` (existing App Store Connect app) |
 | Apple ID | `6812527848` |
 | App name | Last Storyteller |
-| Marketing version | `0.1.0` (same as `package.json`) |
+| Marketing version | `0.1.1` (Codemagic `MARKETING_VERSION`; Capacitor `IOS_MARKETING_VERSION`) |
 | Build number | Codemagic `$BUILD_NUMBER` (increments each CI build) |
 | Codemagic Apple integration | **Last Storyteller Codemagic** (Key ID `23SVT5PLTJ`). Do not use other apps' integrations. |
 
