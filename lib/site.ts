@@ -8,7 +8,7 @@ export const SITE_NAME = "Last Storyteller";
 export const SITE_TAGLINE = "Every story deserves to be told.";
 
 export const SITE_DESCRIPTION =
-  "Every story deserves to be told. Discover other people's stories and upload your own.";
+  "Every story deserves to be told. Discover other people's stories. Upload your own story.";
 
 export const SITE_EMAIL = "mattk@laststoryteller.com";
 

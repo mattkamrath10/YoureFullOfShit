@@ -78,10 +78,13 @@ export function DiscoverHome({
             <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-orange-300/65 sm:text-xs">
               Every story deserves to be told
             </p>
-            <h1 className="text-balance text-3xl font-black leading-[1.08] tracking-tight text-white sm:text-5xl md:text-6xl">
-            <span className="text-orange-400">Discover</span> other
-            people&apos;s stories
-            <br className="hidden sm:block" /> and upload your own story.
+            <h1 className="mx-auto max-w-[20ch] text-[clamp(1.7rem,7vw,3.75rem)] font-black leading-[1.08] tracking-tight text-white sm:max-w-none">
+              <span className="block uppercase text-orange-500">Discover</span>
+              <span className="block">other people&apos;s stories.</span>
+              <span className="mt-[0.08em] block uppercase text-orange-500">
+                Upload
+              </span>
+              <span className="block">your own story.</span>
             </h1>
           </div>
 
