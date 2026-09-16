@@ -83,6 +83,17 @@ export async function getPublishedStories(): Promise<Story[]> {
 
 export async function getStoryById(id: string): Promise<Story | null> {
   const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  async function isBlocked(authorId: string | null): Promise<boolean> {
+    if (!auth.user || !authorId) return false;
+    const { data } = await supabase
+      .from("user_blocks")
+      .select("id")
+      .eq("blocker_id", auth.user.id)
+      .eq("blocked_id", authorId)
+      .maybeSingle();
+    return Boolean(data);
+  }
   const withCounts = await supabase
     .from("stories")
     .select(STORY_SELECT_WITH_COUNTS)
@@ -91,6 +102,7 @@ export async function getStoryById(id: string): Promise<Story | null> {
 
   if (!withCounts.error) {
     if (!withCounts.data) return null;
+    if (await isBlocked((withCounts.data as Story).author_id)) return null;
     return withSocialCounts(withCounts.data as Record<string, unknown>);
   }
 
@@ -103,6 +115,7 @@ export async function getStoryById(id: string): Promise<Story | null> {
   if (basic.error) throw withCounts.error;
   if (!basic.data) return null;
   const story = basic.data as Story;
+  if (await isBlocked(story.author_id)) return null;
   return {
     ...story,
     like_count: story.like_count ?? 0,
