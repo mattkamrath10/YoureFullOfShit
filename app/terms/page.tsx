@@ -14,6 +14,24 @@ export default function TermsPage() {
       <Section title="Third-party services">The service relies on providers including Supabase, Cloudflare R2, Render, Resend, and optional OpenAI narration. Their services are governed by their own terms and policies.</Section>
       <Section title="Disclaimers and liability">Last Storyteller is a user-generated storytelling service. User content may be inaccurate, offensive, or unavailable. To the extent allowed by law, the service is provided as-is and liability is limited to the extent permitted by law.</Section>
       <Section title="Changes and contact">We may update these Terms. Questions, copyright concerns, or notices may be sent to <a className="text-amber-300" href={`mailto:${SITE_EMAIL}`}>{SITE_EMAIL}</a>. Governing-law and business-entity details must be completed before launch where legally required.</Section>
+      <section>
+        <h2 className="mb-2 text-lg font-black text-white">Apple App Store Terms</h2>
+        <p>
+          If you download or use Last Storyteller through Apple&apos;s App Store,
+          your use of the application is also subject to Apple&apos;s Standard
+          Licensed Application End User License Agreement (EULA).
+        </p>
+        <p className="mt-3">
+          <a
+            className="text-amber-300"
+            href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            View Apple&apos;s Standard EULA
+          </a>
+        </p>
+      </section>
     </LegalPage>
   );
 }
