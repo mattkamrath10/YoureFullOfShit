@@ -64,11 +64,23 @@ You do **not** add `capacitor://localhost` for this architecture.
 Native APNs is **not** in this shell. Admin Web Push remains website-only
 (Home Screen / Safari). Do not add APNs unless product requirements change.
 
-## Encryption / export
+## Encryption / export (the Codemagic questionnaire)
 
-The native shell uses standard HTTPS/TLS only. `ITSAppUsesNonExemptEncryption`
-is set to `false` in Info.plist by `scripts/patch-ios-info.mjs`. Confirm the
-same answer in App Store Connect.
+This is the App Store **export compliance** form Apple shows as “Missing
+Compliance” until each IPA answers it. The native shell uses standard HTTPS/TLS
+only, matching the answers already given in App Store Connect.
+
+Each Codemagic build attaches that answer automatically:
+
+1. `scripts/patch-ios-info.mjs` writes `ITSAppUsesNonExemptEncryption` = `false`
+   into `ios/App/App/Info.plist`.
+2. `codemagic.yaml` re-applies the same key with PlistBuddy so a Capacitor sync
+   cannot drop it.
+3. Publishing also sets `copyright: 2026 Last Storyteller` (the YAML field
+   Codemagic attaches for content rights / copyright).
+
+Do not set `ITSAppUsesNonExemptEncryption` to true. This app does not use custom
+encryption. Do not put Stripe or other server secrets in the YAML.
 
 ## Codemagic dashboard
 

@@ -8,6 +8,7 @@
   "supportUrl": "https://laststoryteller.com/support",
   "marketingUrl": "https://laststoryteller.com",
   "category": "Entertainment",
+  "copyright": "2026 Last Storyteller",
   "subscription": {
     "productId": "com.laststoryteller.plus.monthly",
     "displayName": "Last Storyteller Plus",
