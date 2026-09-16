@@ -9,25 +9,46 @@ import {
   PLUS_INTENDED_US_PRICE,
 } from "@/lib/subscription";
 import { isNativeShellWindow } from "@/lib/native/platform";
+import {
+  IOS_PLUS_NO_WEB_PURCHASE_MESSAGE,
+  resolvePlusPurchaseSurface,
+} from "@/lib/plus/purchase-surface";
 
 export function PlusPage() {
   const { isSignedIn, loading, user } = useAuth();
-  const [native, setNative] = useState(false);
+  const [native, setNative] = useState(isNativeShellWindow);
   const [stripeConfigured, setStripeConfigured] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const surface = resolvePlusPurchaseSurface({
+    loading,
+    isSignedIn,
+    isNative: native,
+    stripeConfigured,
+  });
 
   useEffect(() => {
-    setNative(isNativeShellWindow());
+    const isNative = isNativeShellWindow();
+    setNative(isNative);
+    if (isNative) {
+      setStripeConfigured(false);
+      return;
+    }
     void fetch("/api/billing/stripe/status")
       .then((r) => r.json())
       .then((body) => {
-        setStripeConfigured(Boolean(body.configured) && !body.nativeBlocked);
+        if (body.nativeBlocked) {
+          setNative(true);
+          setStripeConfigured(false);
+          return;
+        }
+        setStripeConfigured(Boolean(body.configured));
       })
       .catch(() => undefined);
   }, []);
 
   async function startCheckout() {
+    if (isNativeShellWindow()) return;
     setBusy(true);
     setMessage(null);
     try {
@@ -48,6 +69,7 @@ export function PlusPage() {
   }
 
   async function openPortal() {
+    if (isNativeShellWindow()) return;
     setBusy(true);
     setMessage(null);
     try {
@@ -74,24 +96,25 @@ export function PlusPage() {
         <h1 className="text-4xl font-black text-white">Last Storyteller Plus</h1>
         <p className="text-xl font-bold text-amber-300">{PLUS_INTENDED_US_PRICE}</p>
         <p className="text-sm text-zinc-400">
-          One Plus membership on your Last Storyteller account. Web billing uses Stripe.
-          iOS and Android use their store subscriptions when those are configured.
+          {native
+            ? "Apple will show the localized price before purchase."
+            : "Billed monthly through Stripe on laststoryteller.com."}
         </p>
       </header>
       <div className="grid gap-4 md:grid-cols-2">
         <Tier title="Free" items={FREE_TIER_FEATURES} />
         <Tier title="Last Storyteller Plus" items={PLUS_FEATURES} featured />
       </div>
-      {loading ? null : !isSignedIn ? (
+      {surface === "sign-in" ? (
         <Link
           href="/sign-in"
           className="inline-flex rounded-full bg-orange-500 px-6 py-3 font-black uppercase text-black"
         >
-          Sign in
+          Sign in to upgrade
         </Link>
-      ) : native ? (
+      ) : surface === "ios-iap" ? (
         <NativePlusActions userId={user?.id ?? null} busy={busy} setBusy={setBusy} setMessage={setMessage} />
-      ) : stripeConfigured ? (
+      ) : surface === "web-stripe" ? (
         <div className="flex flex-col items-center gap-3">
           <button
             type="button"
@@ -110,13 +133,11 @@ export function PlusPage() {
             Manage billing
           </button>
         </div>
-      ) : (
+      ) : surface === "web-unconfigured" ? (
         <p className="rounded-2xl border border-amber-400/30 bg-amber-500/10 p-4 text-sm text-amber-100">
-          Stripe Checkout is implemented but not configured in this environment. Plus
-          still works from admin/promo grants and from future Apple or Google
-          entitlements on this same account.
+          Stripe Checkout is not configured in this environment.
         </p>
-      )}
+      ) : null}
       {message ? <p className="text-sm text-rose-200">{message}</p> : null}
       <div className="flex justify-center gap-4 text-sm text-zinc-400">
         <Link href="/privacy">Privacy</Link>
@@ -184,8 +205,8 @@ function NativePlusActions({
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <p className="max-w-md text-sm text-zinc-400">
-        iOS uses Apple In-App Purchase. Stripe Checkout is not available in this app.
+      <p className="max-w-md rounded-2xl border border-amber-400/30 bg-amber-500/10 p-4 text-sm text-amber-100">
+        {IOS_PLUS_NO_WEB_PURCHASE_MESSAGE}
       </p>
       <button
         type="button"

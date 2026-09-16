@@ -16,9 +16,13 @@ const config: CapacitorConfig = {
   appId: IOS_BUNDLE_ID,
   appName: IOS_APP_NAME,
   webDir: "native/www",
+  // Identifies this WebView to Render so Stripe Checkout/portal stay web-only.
+  appendUserAgent: "LastStorytellerNative",
   server: {
     url: PRODUCTION_APP_URL,
     cleartext: false,
+    // Stripe Checkout hosts are intentionally omitted so the iOS shell cannot
+    // follow a Checkout URL even if a client path were reached.
     allowNavigation: [
       "laststoryteller.com",
       "www.laststoryteller.com",
@@ -32,6 +36,7 @@ const config: CapacitorConfig = {
     scrollEnabled: true,
     backgroundColor: "#000B1E",
     allowsLinkPreview: false,
+    appendUserAgent: "LastStorytellerNative",
   },
   plugins: {
     SplashScreen: {
