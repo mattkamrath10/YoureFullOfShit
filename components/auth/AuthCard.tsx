@@ -12,7 +12,7 @@ export function AuthCard({
   children: ReactNode;
 }) {
   return (
-    <div className="mx-auto w-full max-w-md space-y-6 rounded-3xl border border-amber-400/20 bg-zinc-950/70 p-6 sm:p-8">
+    <div className="mx-auto w-full max-w-md space-y-6 rounded-3xl border border-amber-400/20 bg-zinc-950/70 p-6 sm:p-8 md:max-w-lg md:p-10 lg:max-w-xl">
       <div className="space-y-2 text-center">
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-300">
           {eyebrow}

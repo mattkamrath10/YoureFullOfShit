@@ -130,7 +130,7 @@ export function CategoryCarousel({
               onClick={() => select(chip)}
               onFocus={pause}
               onBlur={resume}
-              className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-[11px] font-black uppercase tracking-wide transition duration-200 sm:text-xs ${
+              className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-[11px] font-black uppercase tracking-wide transition duration-200 sm:px-5 sm:text-xs md:py-2.5 ${
                 active
                   ? "border-orange-300 bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-[0_0_20px_rgba(249,115,22,0.32)]"
                   : "border-amber-200/10 bg-white/[0.025] text-zinc-500 hover:border-orange-400/40 hover:bg-orange-400/5 hover:text-zinc-200"

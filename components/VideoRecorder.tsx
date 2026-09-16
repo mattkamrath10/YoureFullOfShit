@@ -231,8 +231,8 @@ export function VideoRecorder({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 p-3 sm:items-center">
-      <div className="max-h-[95dvh] w-full max-w-md overflow-y-auto rounded-3xl border border-white/15 bg-[#0b0b0c] p-4 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:items-center sm:p-6">
+      <div className="max-h-[95dvh] w-full max-w-md overflow-y-auto rounded-3xl border border-white/15 bg-[#0b0b0c] p-4 shadow-2xl md:max-w-xl md:p-6 lg:max-w-2xl">
         <div className="mb-3 flex items-center justify-between gap-2">
           <h2 className="text-sm font-black uppercase tracking-wide text-orange-300">
             {phase === "live" ? "Record Your Story" : "Preview Your Story"}

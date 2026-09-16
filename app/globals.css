@@ -142,3 +142,12 @@ textarea {
   border-radius: 999px;
   animation: story-video-spin 0.85s linear infinite;
 }
+
+@media (min-width: 768px) {
+  .home-hero {
+    background:
+      radial-gradient(ellipse 52% 48% at 50% 40%, rgba(194, 95, 14, 0.18), transparent 72%),
+      radial-gradient(ellipse 78% 58% at 50% 62%, rgba(14, 54, 104, 0.36), transparent 74%),
+      linear-gradient(180deg, rgba(7, 10, 19, 0.12), rgba(3, 9, 20, 0.08));
+  }
+}

@@ -244,14 +244,14 @@ export function TellStoryForm({
         <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
           Story submitted.
         </h1>
-        <p className="mx-auto max-w-md text-sm leading-relaxed text-zinc-400">
+        <p className="mx-auto max-w-md text-sm leading-relaxed text-zinc-400 md:max-w-lg">
           Your story is in the review queue. It will{" "}
           <span className="text-zinc-200">not</span> appear on Discover until
           published.
         </p>
 
         {!isSignedIn && (
-          <div className="mx-auto max-w-md space-y-3 rounded-2xl border border-orange-400/30 bg-orange-500/10 p-4">
+          <div className="mx-auto max-w-md space-y-3 rounded-2xl border border-orange-400/30 bg-orange-500/10 p-4 md:max-w-lg">
             <p className="text-sm font-bold text-orange-100">
               Create a FREE account to track this story in My Stories.
             </p>
@@ -319,19 +319,19 @@ export function TellStoryForm({
           <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
             Every story deserves to be told.
           </h1>
-          <p className="mx-auto max-w-xl text-sm text-zinc-400">
+          <p className="mx-auto max-w-xl text-sm text-zinc-400 md:max-w-2xl">
             Type or speak it. Record video separately. Add evidence if you want.
             The community decides what they believe.
           </p>
           {usage && !hasPlus ? (
-            <p className="mx-auto max-w-xl rounded-2xl border border-white/10 bg-black/30 px-4 py-2 text-sm text-zinc-300">
+            <p className="mx-auto max-w-xl rounded-2xl border border-white/10 bg-black/30 px-4 py-2 text-sm text-zinc-300 md:max-w-2xl">
               {plusRequired
                 ? "You have used both free story submissions. Last Storyteller Plus ($1.99/month) is required to keep publishing."
                 : `${freeLeft} free ${freeLeft === 1 ? "submission" : "submissions"} remaining.`}
             </p>
           ) : null}
           {hasPlus ? (
-            <p className="mx-auto max-w-xl rounded-2xl border border-amber-400/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-100">
+            <p className="mx-auto max-w-xl rounded-2xl border border-amber-400/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-100 md:max-w-2xl">
               Plus is active. Large videos: {usage?.large_videos_this_month ?? 0}/10 this month.
             </p>
           ) : null}

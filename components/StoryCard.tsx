@@ -45,9 +45,9 @@ export function StoryCard({
   return (
     <Link
       href={`/story/${story.id}`}
-      className={`group relative flex items-stretch gap-3 overflow-hidden rounded-3xl border bg-[#070b14]/90 p-4 shadow-[0_12px_30px_rgba(0,0,0,0.22)] transition duration-200 sm:gap-4 sm:p-5 ${
+      className={`group relative flex h-full items-stretch gap-3 overflow-hidden rounded-3xl border bg-[#070b14]/90 p-4 shadow-[0_12px_30px_rgba(0,0,0,0.22)] transition duration-200 sm:gap-4 sm:p-5 md:p-6 ${
         emphasized
-          ? "border-orange-300/55 shadow-[0_0_36px_rgba(249,115,22,0.16),0_12px_30px_rgba(0,0,0,0.26)]"
+          ? "border-orange-300/55 shadow-[0_0_36px_rgba(249,115,22,0.16),0_12px_30px_rgba(0,0,0,0.26)] md:col-span-2"
           : "border-amber-400/20 hover:-translate-y-0.5 hover:border-orange-300/50 hover:bg-[#0a101d]"
       }`}
     >

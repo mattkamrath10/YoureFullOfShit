@@ -93,7 +93,7 @@ export function StoryVideoPlayer({ src }: { src: string }) {
       />
 
       {overlay !== "none" ? (
-        <div className="flex min-h-[13.5rem] flex-col items-center justify-center gap-4 px-6 py-10 text-center sm:min-h-[16rem]">
+        <div className="flex min-h-[13.5rem] flex-col items-center justify-center gap-4 px-6 py-10 text-center sm:min-h-[16rem] md:min-h-[22rem]">
           <span className="story-video-spinner" aria-hidden="true" />
           {overlay === "loading" ? (
             <p className="text-sm font-semibold text-amber-100">Loading your story video...</p>

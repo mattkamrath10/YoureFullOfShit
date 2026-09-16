@@ -40,7 +40,7 @@ export function AccountPanel() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-md rounded-3xl border border-white/10 bg-zinc-900/50 p-8 text-center text-sm text-zinc-500">
+      <div className="mx-auto max-w-md rounded-3xl border border-white/10 bg-zinc-900/50 p-8 text-center text-sm text-zinc-500 md:max-w-lg">
         Loading account…
       </div>
     );

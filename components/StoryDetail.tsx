@@ -31,7 +31,7 @@ export function StoryDetail({
   const mediaForNarrator = media.length ? media : (story.story_media ?? []);
 
   return (
-    <article className="space-y-6">
+    <article className="mx-auto max-w-3xl space-y-6 md:max-w-4xl lg:max-w-5xl">
       {story.status && story.status !== "published" && (
         <p className="rounded-2xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-center text-sm text-amber-100">
           Status: <span className="font-bold uppercase">{story.status}</span> —
@@ -55,7 +55,7 @@ export function StoryDetail({
             </span>
           )}
         </div>
-        <h1 className="text-center text-3xl font-black tracking-tight text-white sm:text-4xl">
+        <h1 className="text-center text-3xl font-black tracking-tight text-white sm:text-4xl md:text-5xl">
           {story.title}
         </h1>
         <p className="mt-3 text-center text-sm text-zinc-400">
@@ -106,7 +106,7 @@ export function StoryDetail({
           <h2 className="mb-3 text-center text-sm font-bold uppercase tracking-wide text-zinc-400">
             Photos
           </h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {grouped.images.map((img) =>
               img.url ? (
                 <AppMediaLink
