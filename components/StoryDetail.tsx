@@ -5,6 +5,7 @@ import { StoryNarrator } from "@/components/StoryNarrator";
 import { StoryDeleteButton } from "@/components/StoryDeleteButton";
 import { StoryActions } from "@/components/social/StoryActions";
 import { CommentSection } from "@/components/social/CommentSection";
+import { BlockUserButton } from "@/components/social/BlockUserButton";
 
 export function StoryDetail({
   story,
@@ -58,6 +59,9 @@ export function StoryDetail({
         <p className="mt-3 text-center text-sm text-zinc-400">
           Told by <span className="text-zinc-200">{teller}</span>
         </p>
+        {!story.is_anonymous && story.author_id ? (
+          <div className="mt-3"><BlockUserButton userId={story.author_id} /></div>
+        ) : null}
 
         <StoryNarrator
           title={story.title}
