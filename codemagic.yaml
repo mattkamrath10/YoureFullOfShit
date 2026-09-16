@@ -42,6 +42,17 @@ workflows:
       - name: Patch iOS Info.plist, privacy manifest, and App Icon
         script: |
           node scripts/patch-ios-info.mjs
+      # Export compliance questionnaire (App Uses Non-Exempt Encryption).
+      # Codemagic/Apple flag the IPA until this is in the built Info.plist.
+      # Same answer as App Store Connect: standard HTTPS/TLS only, not custom crypto.
+      - name: Attach export compliance questionnaire
+        script: |
+          PLIST="$CM_BUILD_DIR/ios/App/App/Info.plist"
+          PLIST_BUDDY=/usr/libexec/PlistBuddy
+          if ! $PLIST_BUDDY -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"; then
+            $PLIST_BUDDY -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST"
+          fi
+          $PLIST_BUDDY -c "Print :ITSAppUsesNonExemptEncryption" "$PLIST"
       - name: Install CocoaPods
         script: |
           cd ios/App
@@ -69,3 +80,5 @@ workflows:
         # Upload to TestFlight. Do not submit for App Store review.
         submit_to_testflight: true
         submit_to_app_store: false
+        # App Store content-rights / copyright metadata attached on each upload.
+        copyright: 2026 Last Storyteller
