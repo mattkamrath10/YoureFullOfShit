@@ -1,4 +1,4 @@
-/** Product copy for Last Storyteller Plus. No Stripe/Apple/Google billing in A0. */
+/** Product copy for Last Storyteller Plus. */
 export {
   FREE_STORY_SUBMISSIONS,
   FREE_TIER_FEATURES,
