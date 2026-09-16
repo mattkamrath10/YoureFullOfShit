@@ -23,14 +23,14 @@ export function SignInPrompt({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 sm:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:items-center"
       role="dialog"
       aria-modal="true"
       aria-labelledby="free-account-prompt-title"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-3xl border border-white/10 bg-zinc-950 p-5 shadow-[0_0_40px_rgba(249,115,22,0.2)]"
+        className="w-full max-w-sm rounded-3xl border border-white/10 bg-zinc-950 p-5 shadow-[0_0_40px_rgba(249,115,22,0.2)] md:max-w-md md:p-7"
         onClick={(e) => e.stopPropagation()}
       >
         <p className="text-center text-[11px] font-bold uppercase tracking-[0.18em] text-orange-300">

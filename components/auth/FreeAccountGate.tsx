@@ -21,7 +21,7 @@ export function FreeAccountGate({
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-md rounded-3xl border border-white/10 bg-zinc-900/50 p-8 text-center text-sm text-zinc-500">
+      <div className="mx-auto max-w-md rounded-3xl border border-white/10 bg-zinc-900/50 p-8 text-center text-sm text-zinc-500 md:max-w-lg">
         Loading…
       </div>
     );
@@ -29,7 +29,7 @@ export function FreeAccountGate({
 
   if (!isSignedIn) {
     return (
-      <div className="mx-auto w-full max-w-md space-y-6 rounded-3xl border border-orange-400/20 bg-zinc-900/70 p-6 text-center sm:p-8">
+      <div className="mx-auto w-full max-w-md space-y-6 rounded-3xl border border-orange-400/20 bg-zinc-900/70 p-6 text-center sm:p-8 md:max-w-lg md:p-10">
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-300">
           Join free
         </p>

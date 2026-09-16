@@ -72,8 +72,8 @@ export function DiscoverHome({
   return (
     <div className="space-y-11 pb-4 sm:space-y-14">
       {/* HERO */}
-      <section className="home-hero relative -mx-4 overflow-hidden px-4 pb-2 pt-4 text-center sm:-mx-6 sm:px-6 sm:pt-7 lg:-mx-8 lg:px-8">
-        <div className="relative mx-auto max-w-3xl">
+      <section className="home-hero relative -mx-4 overflow-hidden px-4 pb-2 pt-4 text-center sm:-mx-6 sm:px-6 sm:pt-7 md:-mx-8 md:px-8 lg:-mx-10 lg:px-10">
+        <div className="relative mx-auto max-w-3xl md:max-w-4xl lg:max-w-5xl">
           <div className="space-y-2 px-1">
             <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-orange-300/65 sm:text-xs">
               Every story deserves to be told
@@ -88,7 +88,7 @@ export function DiscoverHome({
             </h1>
           </div>
 
-          <div className="hero-artwork mx-auto mt-5 w-[min(86vw,34rem)] sm:mt-7">
+          <div className="hero-artwork mx-auto mt-5 w-[min(86vw,34rem)] sm:mt-7 md:w-[min(58vw,42rem)]">
             <div className="hero-artwork__atmosphere" aria-hidden />
             <Image
               src="/last-storyteller-logo.png"
@@ -104,7 +104,7 @@ export function DiscoverHome({
           <div className="mt-1 space-y-3 sm:mt-3">
             <Link
               href="/tell"
-              className="inline-flex w-full max-w-md items-center justify-center gap-2 rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-orange-400 px-7 py-4 text-sm font-black uppercase tracking-wide text-white shadow-[0_10px_30px_rgba(249,115,22,0.32),0_0_42px_rgba(249,115,22,0.22)] transition duration-200 hover:-translate-y-0.5 hover:from-amber-400 hover:via-orange-400 hover:to-orange-300 sm:px-9 sm:text-base"
+              className="inline-flex w-full max-w-md items-center justify-center gap-2 rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-orange-400 px-7 py-4 text-sm font-black uppercase tracking-wide text-white shadow-[0_10px_30px_rgba(249,115,22,0.32),0_0_42px_rgba(249,115,22,0.22)] transition duration-200 hover:-translate-y-0.5 hover:from-amber-400 hover:via-orange-400 hover:to-orange-300 sm:px-9 sm:text-base md:max-w-lg"
             >
               <span aria-hidden>✎</span>
               Tell Your Story
@@ -118,7 +118,7 @@ export function DiscoverHome({
       </section>
 
       {/* FILTERS + FEED */}
-      <section id="feed" className="mx-auto max-w-5xl space-y-5 sm:space-y-6">
+      <section id="feed" className="mx-auto max-w-5xl space-y-5 sm:space-y-6 md:max-w-6xl xl:max-w-7xl">
         <div className="relative">
           <label className="sr-only" htmlFor="discover-search">
             Search stories
@@ -153,7 +153,7 @@ export function DiscoverHome({
               : "No stories match this filter."}
           </p>
         ) : (
-          <div className="grid gap-4 sm:gap-5">
+          <div className="grid gap-4 sm:gap-5 md:grid-cols-2">
             {filtered.map((story, i) => (
               <StoryCard
                 key={story.id}

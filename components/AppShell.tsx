@@ -13,7 +13,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-dvh bg-[#030914] text-zinc-100">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_50%_-10%,_rgba(180,83,9,0.14),_transparent_34%),radial-gradient(ellipse_at_50%_38%,_rgba(11,32,66,0.34),_transparent_48%)]" />
       <header className="sticky top-0 z-40 border-b border-amber-400/20 bg-[#040812]/85 pt-[max(0px,env(safe-area-inset-top))] backdrop-blur-xl">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6 md:px-8">
           <Link
             href="/"
             onClick={() => {
@@ -36,7 +36,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden items-center gap-2 md:flex">
+          <nav className="hidden items-center gap-2 min-[700px]:flex">
             <Link
               href="/#feed"
               className="rounded-full border border-amber-400/20 bg-white/[0.035] px-3.5 py-1.5 text-xs font-semibold text-zinc-200 transition hover:border-amber-300/45 hover:bg-white/[0.08]"
@@ -59,7 +59,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
 
           {/* Mobile: search + menu */}
-          <div className="flex items-center gap-1 md:hidden">
+          <div className="flex items-center gap-1 min-[700px]:hidden">
             <Link
               href="/#feed"
               className="inline-flex h-10 w-10 items-center justify-center rounded-full text-orange-400"
@@ -86,7 +86,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         {menuOpen ? (
-          <div className="border-t border-orange-500/15 bg-[#040812]/95 px-4 py-3 md:hidden">
+          <div className="border-t border-orange-500/15 bg-[#040812]/95 px-4 py-3 min-[700px]:hidden">
             <nav className="mx-auto flex max-w-6xl flex-col gap-2">
               <Link
                 href="/my-stories"
@@ -110,10 +110,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         ) : null}
       </header>
 
-      <main className="relative mx-auto max-w-3xl px-4 pb-16 pt-5 sm:max-w-5xl sm:px-6 lg:max-w-6xl">
+      <main className="relative mx-auto w-full max-w-3xl px-4 pb-[max(4rem,calc(env(safe-area-inset-bottom)+2.5rem))] pt-5 sm:max-w-5xl sm:px-6 md:max-w-6xl md:px-8 md:pt-8 xl:max-w-7xl">
         {children}
       </main>
-      <footer className="relative border-t border-amber-400/10 px-4 py-8 text-center text-xs text-zinc-500">
+      <footer className="relative border-t border-amber-400/10 px-4 py-8 pb-[max(2rem,env(safe-area-inset-bottom))] text-center text-xs text-zinc-500 sm:px-8">
         <nav className="flex flex-wrap justify-center gap-x-5 gap-y-3" aria-label="Legal and support">
           <Link href="/privacy" className="transition hover:text-amber-200">Privacy</Link>
           <Link href="/terms" className="transition hover:text-amber-200">Terms</Link>

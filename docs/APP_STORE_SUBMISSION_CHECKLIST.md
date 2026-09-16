@@ -6,7 +6,7 @@
 - [x] Capacitor iOS shell, bundle `com.laststoryteller.app`, Codemagic TestFlight upload
 - [x] StoreKit 2 plugin (`PlusStore`) + server JWS verification for `source=apple`
 - [x] Stripe Checkout hidden in the native app
-- [x] iPad: `preferredContentMode: automatic`, responsive viewport, safe-area header
+- [x] iPad: `preferredContentMode: recommended`, responsive viewport, tablet layout (2-col feed, wider shell/auth/Plus, safe-area header/footer)
 - [x] Subscription copy: Last Storyteller Plus $1.99/month (`com.laststoryteller.plus.monthly`)
 - [x] Listing draft: `store/app-store/listing.json`
 

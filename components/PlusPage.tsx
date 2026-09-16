@@ -88,12 +88,12 @@ export function PlusPage() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl space-y-8 text-center">
+    <div className="mx-auto max-w-4xl space-y-8 text-center md:max-w-5xl md:space-y-10">
       <header className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[.25em] text-amber-300">
           Membership
         </p>
-        <h1 className="text-4xl font-black text-white">Last Storyteller Plus</h1>
+        <h1 className="text-4xl font-black text-white md:text-5xl">Last Storyteller Plus</h1>
         <p className="text-xl font-bold text-amber-300">{PLUS_INTENDED_US_PRICE}</p>
         <p className="text-sm text-zinc-400">
           {native
@@ -101,7 +101,7 @@ export function PlusPage() {
             : "Billed monthly through Stripe on laststoryteller.com."}
         </p>
       </header>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2 md:gap-6">
         <Tier title="Free" items={FREE_TIER_FEATURES} />
         <Tier title="Last Storyteller Plus" items={PLUS_FEATURES} featured />
       </div>
@@ -144,7 +144,7 @@ export function PlusPage() {
         <Link href="/terms">Terms</Link>
         <Link href="/support">Support</Link>
       </div>
-    </main>
+    </div>
   );
 }
 
@@ -205,7 +205,7 @@ function NativePlusActions({
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <p className="max-w-md rounded-2xl border border-amber-400/30 bg-amber-500/10 p-4 text-sm text-amber-100">
+      <p className="max-w-md rounded-2xl border border-amber-400/30 bg-amber-500/10 p-4 text-sm text-amber-100 md:max-w-xl">
         {IOS_PLUS_NO_WEB_PURCHASE_MESSAGE}
       </p>
       <button
@@ -239,7 +239,7 @@ function Tier({
 }) {
   return (
     <section
-      className={`rounded-3xl border p-6 text-left ${
+      className={`rounded-3xl border p-6 text-left md:p-8 ${
         featured ? "border-amber-400/50 bg-amber-500/10" : "border-white/10 bg-zinc-900/70"
       }`}
     >

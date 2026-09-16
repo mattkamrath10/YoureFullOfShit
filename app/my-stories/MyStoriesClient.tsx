@@ -62,7 +62,7 @@ export function MyStoriesClient({
         </section>
 
         {usage ? (
-          <section className="grid gap-2 rounded-3xl border border-white/10 bg-zinc-900/60 p-4 text-center text-sm text-zinc-300 sm:grid-cols-2">
+          <section className="grid gap-2 rounded-3xl border border-white/10 bg-zinc-900/60 p-4 text-center text-sm text-zinc-300 sm:grid-cols-2 md:grid-cols-4 md:p-5">
             <p>
               Lifetime stories used:{" "}
               <span className="font-semibold text-white">{usage.stories_submitted_count}</span>
@@ -89,7 +89,7 @@ export function MyStoriesClient({
             .
           </p>
         ) : (
-          <div className="grid gap-3">
+          <div className="grid gap-3 md:grid-cols-2 md:gap-4">
             {stories.map((story) => {
               const status = story.status ?? "pending";
               const mediaCount = story.story_media?.length ?? 0;
