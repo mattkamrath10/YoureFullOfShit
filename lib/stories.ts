@@ -45,6 +45,15 @@ const STORY_SELECT_BASIC =
 
 export async function getPublishedStories(): Promise<Story[]> {
   const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  const blockedAuthorIds = new Set<string>();
+  if (auth.user) {
+    const { data: blocks } = await supabase
+      .from("user_blocks")
+      .select("blocked_id")
+      .eq("blocker_id", auth.user.id);
+    for (const block of blocks ?? []) blockedAuthorIds.add(block.blocked_id as string);
+  }
   const withCounts = await supabase
     .from("stories")
     .select(PUBLISHED_SELECT_WITH_COUNTS)
@@ -53,9 +62,9 @@ export async function getPublishedStories(): Promise<Story[]> {
     .order("created_at", { ascending: false });
 
   if (!withCounts.error) {
-    return (withCounts.data ?? []).map((row) =>
-      withSocialCounts(row as Record<string, unknown>),
-    );
+    return (withCounts.data ?? [])
+      .map((row) => withSocialCounts(row as Record<string, unknown>))
+      .filter((story) => !story.author_id || !blockedAuthorIds.has(story.author_id));
   }
 
   // Fallback before social migration is applied
@@ -67,11 +76,9 @@ export async function getPublishedStories(): Promise<Story[]> {
     .order("created_at", { ascending: false });
 
   if (basic.error) throw withCounts.error;
-  return ((basic.data ?? []) as Story[]).map((s) => ({
-    ...s,
-    like_count: s.like_count ?? 0,
-    comment_count: s.comment_count ?? 0,
-  }));
+  return ((basic.data ?? []) as Story[])
+    .map((s) => ({ ...s, like_count: s.like_count ?? 0, comment_count: s.comment_count ?? 0 }))
+    .filter((story) => !story.author_id || !blockedAuthorIds.has(story.author_id));
 }
 
 export async function getStoryById(id: string): Promise<Story | null> {
