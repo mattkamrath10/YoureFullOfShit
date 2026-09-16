@@ -7,6 +7,7 @@ import { getStripe } from "@/lib/billing/stripe/client";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getSiteUrl } from "@/lib/site";
 import { rateLimit } from "@/lib/rate-limit";
+import { buildStripeCheckoutSessionParams } from "@/lib/billing/stripe/price";
 
 export const runtime = "nodejs";
 
@@ -57,18 +58,14 @@ export async function POST(request: Request) {
   }
 
   const origin = getSiteUrl();
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    customer: customerId,
-    client_reference_id: user.id,
-    line_items: [{ price: getStripePriceId(), quantity: 1 }],
-    success_url: `${origin}/plus?checkout=success`,
-    cancel_url: `${origin}/plus?checkout=cancel`,
-    subscription_data: {
-      metadata: { user_id: user.id },
-    },
-    metadata: { user_id: user.id },
-  });
+  const session = await stripe.checkout.sessions.create(
+    buildStripeCheckoutSessionParams({
+      customerId,
+      userId: user.id,
+      origin,
+      priceId: getStripePriceId(),
+    }),
+  );
 
   if (!session.url) {
     return NextResponse.json({ error: "Stripe did not return a Checkout URL." }, { status: 502 });
