@@ -14,14 +14,20 @@ workflows:
       vars:
         XCODE_WORKSPACE: App.xcworkspace
         XCODE_SCHEME: App
-        MARKETING_VERSION: "0.1.0"
+        # Bump when shipping a new TestFlight binary. The WKWebView loads
+        # https://laststoryteller.com, so Render deploys web UX (including
+        # story video loading) without baking Next.js into the IPA.
+        MARKETING_VERSION: "0.1.1"
         NODE_VERSION: "20"
         # Existing App Store Connect app. Do not create a second app.
         APP_STORE_APPLE_ID: "6812527848"
+        PRODUCTION_APP_URL: "https://laststoryteller.com"
       node: 20
       xcode: latest
       cocoapods: default
     scripts:
+      # Do NOT inject Render/Stripe/Supabase/R2 secrets here. The iOS shell
+      # does not run Next.js. It loads PRODUCTION_APP_URL in WKWebView.
       - name: Install npm dependencies
         script: |
           npm ci
