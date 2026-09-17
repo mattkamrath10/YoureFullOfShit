@@ -53,6 +53,63 @@ function upsertPlistString(plist, key, value) {
   return plist.replace("</dict>\n</plist>", `${entry}</dict>\n</plist>`);
 }
 
+function assertAppStoreIcon(filePath) {
+  const buf = fs.readFileSync(filePath);
+  const isPng = buf.length >= 26 && buf[0] === 0x89 && buf[1] === 0x50;
+  if (!isPng) {
+    console.error(`App Store icon is not a PNG: ${filePath}`);
+    process.exit(1);
+  }
+  const width = buf.readUInt32BE(16);
+  const height = buf.readUInt32BE(20);
+  const colorType = buf[25];
+  if (width !== 1024 || height !== 1024) {
+    console.error(
+      `App Store icon must be 1024x1024, got ${width}x${height}: ${filePath}`,
+    );
+    process.exit(1);
+  }
+  // PNG color type 2 = RGB. Type 6 = RGBA; Apple drops/rejects that 1024 slot.
+  if (colorType !== 2) {
+    console.error(
+      `App Store icon must be RGB with no alpha channel (PNG color type 2). Got ${colorType}: ${filePath}`,
+    );
+    process.exit(1);
+  }
+}
+
+function installAppIcon() {
+  if (!fs.existsSync(iconSrc)) {
+    console.error(
+      `Missing ${iconSrc}. App Store Connect will not show an icon without a 1024x1024 RGB PNG.`,
+    );
+    process.exit(1);
+  }
+  assertAppStoreIcon(iconSrc);
+  fs.mkdirSync(path.dirname(iconDest), { recursive: true });
+  fs.copyFileSync(iconSrc, iconDest);
+  const placeholder = path.join(path.dirname(iconDest), "AppIcon-512@2x.png");
+  if (fs.existsSync(placeholder)) fs.unlinkSync(placeholder);
+  fs.writeFileSync(
+    contentsJsonDest,
+    `${JSON.stringify(
+      {
+        images: [
+          {
+            filename: "AppIcon-1024.png",
+            idiom: "universal",
+            platform: "ios",
+            size: "1024x1024",
+          },
+        ],
+        info: { author: "xcode", version: 1 },
+      },
+      null,
+      2,
+    )}\n`,
+  );
+}
+
 function upsertPlistFalse(plist, key) {
   const entry = `\t<key>${key}</key>\n\t<false/>\n`;
   const re = new RegExp(`\\t<key>${key}</key>\\s*<(true|false)/>\\n`);
@@ -85,6 +142,7 @@ for (const [key, value] of Object.entries(USAGE)) {
   plist = upsertPlistString(plist, key, value);
 }
 plist = upsertPlistFalse(plist, "ITSAppUsesNonExemptEncryption");
+plist = upsertPlistString(plist, "CFBundleIconName", "AppIcon");
 fs.writeFileSync(infoPlist, plist);
 
 if (fs.existsSync(privacySrc)) {
@@ -95,27 +153,6 @@ if (fs.existsSync(pluginSrc)) {
   fs.copyFileSync(pluginSrc, pluginDest);
 }
 
-if (fs.existsSync(iconSrc)) {
-  fs.mkdirSync(path.dirname(iconDest), { recursive: true });
-  fs.copyFileSync(iconSrc, iconDest);
-  fs.writeFileSync(
-    contentsJsonDest,
-    `${JSON.stringify(
-      {
-        images: [
-          {
-            filename: "AppIcon-1024.png",
-            idiom: "universal",
-            platform: "ios",
-            size: "1024x1024",
-          },
-        ],
-        info: { author: "xcode", version: 1 },
-      },
-      null,
-      2,
-    )}\n`,
-  );
-}
+installAppIcon();
 
 console.log("Patched iOS Info.plist, PrivacyInfo.xcprivacy, PlusStore plugin, and AppIcon.");

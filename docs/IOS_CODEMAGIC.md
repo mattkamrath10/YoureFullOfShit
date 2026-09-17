@@ -11,11 +11,20 @@ the web app.
 | Bundle ID | `com.laststoryteller.app` (existing App Store Connect app) |
 | Apple ID | `6812527848` |
 | App name | Last Storyteller |
-| Marketing version | `0.1.2` (Codemagic `MARKETING_VERSION`; Capacitor `IOS_MARKETING_VERSION`) |
+| Marketing version | `0.1.3` (Codemagic `MARKETING_VERSION`; Capacitor `IOS_MARKETING_VERSION`) |
+| App Store icon | `native/ios/AppIcon-1024.png` — 1024×1024 RGB PNG, no alpha. Codemagic copies it into the asset catalog. |
 | Build number | Codemagic `$BUILD_NUMBER` (increments each CI build) |
 | Codemagic Apple integration | **Last Storyteller Codemagic** (Key ID `23SVT5PLTJ`). Do not use other apps' integrations. |
 
 The `.p8` private key stays in Codemagic. It is not in this repository.
+
+Regenerate brand icons (App Store 1024, PWA, OG 1200×630) from the marketing mockup:
+
+```bash
+python3 scripts/generate-brand-icons.py path/to/icon.png
+```
+
+The App Store 1024 must stay RGB with **no alpha channel**. A rounded mockup on white will not show in App Store Connect.
 
 ## Why `ios/` is committed
 
