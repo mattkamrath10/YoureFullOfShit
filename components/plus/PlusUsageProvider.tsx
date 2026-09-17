@@ -15,6 +15,7 @@ import {
   applyEntitlementRefreshResult,
   createRefreshLock,
   parsePlusUsage,
+  plusIdentityChanged,
   PLUS_USAGE_ENDPOINT,
   PLUS_USAGE_REFRESH_ERROR,
   type PlusUsage,
@@ -60,12 +61,14 @@ async function fetchAuthoritativeUsage(): Promise<
 }
 
 export function PlusUsageProvider({ children }: { children: ReactNode }) {
-  const { isSignedIn, loading: authLoading } = useAuth();
+  const { isSignedIn, loading: authLoading, user } = useAuth();
+  const userId = isSignedIn ? (user?.id ?? null) : null;
   const [usage, setUsage] = useState<PlusUsage | null>(null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const lockRef = useRef(createRefreshLock());
+  const activeUserIdRef = useRef<string | null>(null);
 
   const applyResult = useCallback(
     (result: { ok: true; usage: PlusUsage } | { ok: false; message?: string }) => {
@@ -86,20 +89,24 @@ export function PlusUsageProvider({ children }: { children: ReactNode }) {
   );
 
   const refresh = useCallback(async () => {
-    if (!isSignedIn) {
+    if (!userId) {
       setUsage(null);
       return null;
     }
+    const requestedUserId = userId;
     return lockRef.current.run(async () => {
       setRefreshing(true);
       try {
         const result = await fetchAuthoritativeUsage();
+        if (activeUserIdRef.current !== requestedUserId) return null;
         return applyResult(result);
       } finally {
-        setRefreshing(false);
+        if (activeUserIdRef.current === requestedUserId) {
+          setRefreshing(false);
+        }
       }
     });
-  }, [applyResult, isSignedIn]);
+  }, [applyResult, userId]);
 
   const hydrate = useCallback((next: PlusUsage | null) => {
     setUsage((current) => current ?? next);
@@ -107,7 +114,20 @@ export function PlusUsageProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!isSignedIn) {
+    const identityChanged = plusIdentityChanged(
+      activeUserIdRef.current,
+      userId,
+    );
+    activeUserIdRef.current = userId;
+    if (identityChanged) {
+      // Entitlement state belongs to one authenticated user. Never carry a
+      // previous account's Plus result into the next account.
+      lockRef.current = createRefreshLock();
+      setUsage(null);
+      setError(null);
+      setRefreshing(false);
+    }
+    if (!userId) {
       setUsage(null);
       setError(null);
       setLoading(false);
@@ -118,7 +138,9 @@ export function PlusUsageProvider({ children }: { children: ReactNode }) {
     void lockRef.current
       .run(async () => {
         const result = await fetchAuthoritativeUsage();
-        if (!cancelled) applyResult(result);
+        if (!cancelled && activeUserIdRef.current === userId) {
+          applyResult(result);
+        }
         return result;
       })
       .finally(() => {
@@ -127,7 +149,7 @@ export function PlusUsageProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [applyResult, authLoading, isSignedIn]);
+  }, [applyResult, authLoading, userId]);
 
   const value = useMemo<PlusUsageContextValue>(
     () => ({

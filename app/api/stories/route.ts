@@ -13,7 +13,13 @@ export async function POST(request: Request) {
     return apiError("RATE_LIMITED", "Too many story submissions. Try again shortly.", 429);
   }
 
-  let body: { title?: unknown; categoryId?: unknown; text?: unknown; isAnonymous?: unknown };
+  let body: {
+    title?: unknown;
+    categoryId?: unknown;
+    text?: unknown;
+    isAnonymous?: unknown;
+    displayName?: unknown;
+  };
   try {
     body = await request.json();
   } catch {
@@ -29,6 +35,22 @@ export async function POST(request: Request) {
 
   try {
     const supabase = await createUserClientFromRequest(request);
+    if (body.isAnonymous === false) {
+      const displayName =
+        typeof body.displayName === "string" ? body.displayName.trim() : "";
+      if (!displayName || displayName.length > 60) {
+        return apiError(
+          "INVALID_DISPLAY_NAME",
+          'Enter a display name, or choose "Post anonymously".',
+          400,
+        );
+      }
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ display_name: displayName })
+        .eq("id", user.id);
+      if (profileError) throw profileError;
+    }
     const preview = text ? text.slice(0, 160) : title.slice(0, 160);
     const { data, error } = await supabase.rpc("create_pending_story", {
       p_category_id: categoryId,
@@ -42,7 +64,10 @@ export async function POST(request: Request) {
       if (mapped) return apiError(mapped.code, mapped.message, mapped.status);
       throw error;
     }
-    return Response.json({ data: { id: data, status: "pending" } }, { status: 201 });
+    return Response.json(
+      { data: { id: data, userId: user.id, status: "pending" } },
+      { status: 201 },
+    );
   } catch {
     return apiError("STORY_CREATE_FAILED", "Could not create story.", 400);
   }

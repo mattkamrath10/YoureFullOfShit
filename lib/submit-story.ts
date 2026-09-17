@@ -1,8 +1,5 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
-import { isEmailAuthUser } from "@/lib/auth/session";
-import { plusErrorMessage } from "@/lib/plus/errors";
 import {
   GUEST_LARGE_VIDEO_MESSAGE,
   GUEST_UPLOAD_MAX,
@@ -11,6 +8,7 @@ import {
   type MediaUploadProgress,
   type SelectedMedia,
 } from "@/lib/media";
+import { STORY_SUBMISSION_ENDPOINT } from "@/lib/plus/usage";
 
 export type SubmitStoryInput = {
   title: string;
@@ -23,16 +21,6 @@ export type SubmitStoryInput = {
   onUploadProgress?: (p: MediaUploadProgress) => void;
   signal?: AbortSignal;
 };
-
-function makePreview(body: string, title: string): string {
-  const cleaned = body.replace(/\s+/g, " ").trim();
-  if (cleaned) {
-    if (cleaned.length <= 160) return cleaned;
-    return `${cleaned.slice(0, 157).trim()}...`;
-  }
-  const t = title.trim();
-  return t.length <= 160 ? t : `${t.slice(0, 157).trim()}...`;
-}
 
 function notifyAdminsNewStory(storyId: string): void {
   void fetch("/api/admin/notify-new-story", {
@@ -59,16 +47,10 @@ export async function submitStory(input: SubmitStoryInput) {
   }
   if (body.length > 20000) throw new Error("Story must be 20,000 characters or fewer.");
 
-  const supabase = createClient();
-  const { data: authData } = await supabase.auth.getUser();
-  const sessionUser = authData.user;
-  if (!sessionUser || !isEmailAuthUser(sessionUser)) {
-    throw new Error("Create an account to tell your story.");
-  }
-  const user = sessionUser;
-
   for (const item of input.media) {
     const check = validateMediaFile(item.file, {
+      // Client-side UX only. The authenticated story and R2 API routes make
+      // the authoritative account/Plus decisions on the server.
       emailAuth: true,
       hasPlus: Boolean(input.hasPlus),
     });
@@ -78,36 +60,45 @@ export async function submitStory(input: SubmitStoryInput) {
     }
   }
 
-  if (!input.isAnonymous) {
-    const name = (input.displayName ?? "").trim();
-    if (!name) throw new Error("Enter a display name, or choose Post anonymously.");
-    if (name.length > 60) throw new Error("Display name must be 60 characters or fewer.");
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .update({ display_name: name })
-      .eq("id", user.id);
-    if (profileError) throw profileError;
-  }
-
-  const { data, error } = await supabase.rpc("create_pending_story", {
-    p_category_id: categoryId,
-    p_title: title,
-    p_body: body,
-    p_preview: makePreview(body, title),
-    p_is_anonymous: input.isAnonymous,
+  // Use the same cookie-authenticated server path as /api/me/plus. Previously
+  // this called Supabase directly from the browser while the nav used a Next
+  // API route, allowing their authenticated session snapshots to diverge.
+  const response = await fetch(STORY_SUBMISSION_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({
+      title,
+      categoryId,
+      text: body,
+      isAnonymous: input.isAnonymous,
+      displayName: input.displayName,
+    }),
+    signal: input.signal,
   });
-
-  if (error) {
-    const mapped = plusErrorMessage(error);
-    throw new Error(mapped?.message ?? error.message);
+  const result = (await response.json().catch(() => null)) as
+    | {
+        data?: { id?: unknown; userId?: unknown };
+        error?: { message?: unknown };
+      }
+    | null;
+  if (!response.ok) {
+    const message =
+      typeof result?.error?.message === "string"
+        ? result.error.message
+        : "Could not create story.";
+    throw new Error(message);
   }
 
-  const storyId = data as string;
-  if (!storyId) throw new Error("Could not create story.");
+  const storyId =
+    typeof result?.data?.id === "string" ? result.data.id : "";
+  const userId =
+    typeof result?.data?.userId === "string" ? result.data.userId : "";
+  if (!storyId || !userId) throw new Error("Could not create story.");
 
   if (input.media.length > 0) {
     await uploadStoryMedia({
-      userId: user.id,
+      userId,
       storyId,
       files: input.media,
       onProgress: input.onUploadProgress,

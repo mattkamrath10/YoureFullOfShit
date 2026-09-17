@@ -390,6 +390,12 @@ export function TellStoryForm({
               Plus is active. Large videos: {liveUsage?.large_videos_this_month ?? 0}/10 this month.
             </p>
           ) : null}
+          <PlusRefreshActions
+            refreshing={plusUsage.refreshing}
+            error={plusUsage.error}
+            onRefresh={() => void refreshSubscription()}
+            showGetPlus={false}
+          />
           {plusRequired ? (
             <Link
               href="/plus"
@@ -548,13 +554,8 @@ export function TellStoryForm({
                 Images ≤ 10 MB · Free: video ≤ 50 MB · Plus: large video via R2 up to 1 GB · PDFs ≤ 20 MB
               </p>
               {isSignedIn && !hasPlus && (
-                <div className="mt-2 space-y-3 rounded-2xl border border-sky-400/30 bg-sky-500/10 px-3 py-3 text-sm text-sky-100">
+                <div className="mt-2 rounded-2xl border border-sky-400/30 bg-sky-500/10 px-3 py-3 text-sm text-sky-100">
                   <p>{PLUS_LARGE_VIDEO_MESSAGE}</p>
-                  <PlusRefreshActions
-                    refreshing={plusUsage.refreshing}
-                    error={plusUsage.error}
-                    onRefresh={() => void refreshSubscription()}
-                  />
                 </div>
               )}
             </div>

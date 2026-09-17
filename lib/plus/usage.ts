@@ -14,6 +14,7 @@ export type PlusUsage = {
 
 /** Cookie/session RPC endpoint. Server uses auth.uid(); never a client-supplied user id. */
 export const PLUS_USAGE_ENDPOINT = "/api/me/plus";
+export const STORY_SUBMISSION_ENDPOINT = "/api/stories";
 
 export const PLUS_USAGE_REFRESH_ERROR =
   "Could not refresh your Plus membership. Check your connection and try again.";
@@ -26,6 +27,14 @@ export function plusNavAppearance(args: {
 }): PlusNavAppearance {
   if (!args.isSignedIn) return "hidden";
   return args.hasPlus ? "plus-member" : "get-plus";
+}
+
+/** Shared Plus state must never survive an authenticated account change. */
+export function plusIdentityChanged(
+  previousUserId: string | null,
+  currentUserId: string | null,
+): boolean {
+  return previousUserId !== currentUserId;
 }
 
 function asInt(value: unknown, fallback: number): number {
