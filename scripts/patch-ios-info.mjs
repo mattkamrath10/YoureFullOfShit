@@ -1,12 +1,14 @@
 /**
- * Applied after `npx cap add ios` / `npx cap sync ios`.
- * Safe to re-run. Does not contain secrets.
+ * Applied before/after `npx cap sync ios`. Safe to re-run. Does not contain secrets.
+ * Also sets Podfile `platform :ios` to 15.0 so Capacitor 8 CocoaPods resolve.
  */
 import fs from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
 const infoPlist = path.join(root, "ios", "App", "App", "Info.plist");
+const podfilePath = path.join(root, "ios", "App", "Podfile");
+const IOS_MIN = "15.0";
 const privacySrc = path.join(root, "native", "ios", "PrivacyInfo.xcprivacy");
 const privacyDest = path.join(root, "ios", "App", "App", "PrivacyInfo.xcprivacy");
 const contentsJsonDest = path.join(
@@ -57,6 +59,21 @@ function upsertPlistFalse(plist, key) {
   if (re.test(plist)) return plist.replace(re, entry);
   return plist.replace("</dict>\n</plist>", `${entry}</dict>\n</plist>`);
 }
+
+function ensurePodfileIosMin() {
+  if (!fs.existsSync(podfilePath)) return;
+  const text = fs.readFileSync(podfilePath, "utf8");
+  const next = text.replace(
+    /platform :ios, ['"][\d.]+['"]/,
+    `platform :ios, '${IOS_MIN}'`,
+  );
+  if (next !== text) {
+    fs.writeFileSync(podfilePath, next);
+    console.log(`Set Podfile platform to iOS ${IOS_MIN} (required by Capacitor 8).`);
+  }
+}
+
+ensurePodfileIosMin();
 
 if (!fs.existsSync(infoPlist)) {
   console.error("ios/App/App/Info.plist not found. Run npx cap add ios first (Codemagic does this).");
