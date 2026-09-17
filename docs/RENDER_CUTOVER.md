@@ -19,3 +19,10 @@ Keep the existing Render **service name** `youre-full-of-shit`. That is the live
 9. After DNS, Supabase redirects, and R2 CORS all point to laststoryteller.com and smoke tests pass, you may leave the old `*.onrender.com` URL as a Render default hostname.
 
 The previous Vercel hosts (`your-full-of-shit.vercel.app` / `youre-full-of-shit.vercel.app`) are historical only. Canonical URLs now come from `NEXT_PUBLIC_SITE_URL`.
+
+Production is **Render**, not Vercel. If GitHub PRs still show a red Vercel check, the old Vercel GitHub App is still installed. Disconnect it:
+
+1. GitHub → repo **Settings** → **Integrations / GitHub Apps** → **Vercel** → Uninstall / Configure → revoke this repo
+2. Or Vercel dashboard → project **youre-full-of-shit** → Settings → Git → Disconnect
+
+`vercel.json` in this repo turns off automatic Vercel git deploys so a leftover integration cannot fail PRs.
