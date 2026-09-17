@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { AppShell } from "@/components/AppShell";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { NativeShell } from "@/components/native/NativeShell";
+import { PlusUsageProvider } from "@/components/plus/PlusUsageProvider";
 import { buildRootMetadata } from "@/lib/site-metadata";
 import "./globals.css";
 
@@ -23,8 +24,10 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <AuthProvider>
-          <NativeShell />
-          <AppShell>{children}</AppShell>
+          <PlusUsageProvider>
+            <NativeShell />
+            <AppShell>{children}</AppShell>
+          </PlusUsageProvider>
         </AuthProvider>
       </body>
     </html>

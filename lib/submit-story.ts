@@ -19,6 +19,7 @@ export type SubmitStoryInput = {
   isAnonymous: boolean;
   displayName?: string;
   media: SelectedMedia[];
+  hasPlus?: boolean;
   onUploadProgress?: (p: MediaUploadProgress) => void;
   signal?: AbortSignal;
 };
@@ -67,7 +68,10 @@ export async function submitStory(input: SubmitStoryInput) {
   const user = sessionUser;
 
   for (const item of input.media) {
-    const check = validateMediaFile(item.file, { emailAuth: true });
+    const check = validateMediaFile(item.file, {
+      emailAuth: true,
+      hasPlus: Boolean(input.hasPlus),
+    });
     if (!check.ok) throw new Error(check.error);
     if (item.file.size > GUEST_UPLOAD_MAX && item.mediaType !== "video") {
       throw new Error(GUEST_LARGE_VIDEO_MESSAGE);

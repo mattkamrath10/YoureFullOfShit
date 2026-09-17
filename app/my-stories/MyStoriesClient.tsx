@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { FreeAccountGate } from "@/components/auth/FreeAccountGate";
+import { usePlusUsage } from "@/components/plus/PlusUsageProvider";
 import { StoryDeleteButton } from "@/components/StoryDeleteButton";
 import { remainingFreeStories, type PlusUsage } from "@/lib/plus/usage";
 import { formatBytes } from "@/lib/media";
@@ -45,6 +47,12 @@ export function MyStoriesClient({
   stories: MyStoryRow[];
   usage?: PlusUsage | null;
 }) {
+  const plusUsage = usePlusUsage();
+  useEffect(() => {
+    plusUsage.hydrate(usage);
+  }, [plusUsage.hydrate, usage]);
+  const liveUsage = plusUsage.usage ?? usage;
+
   return (
     <FreeAccountGate
       title="My Stories"
@@ -61,22 +69,22 @@ export function MyStoriesClient({
           </p>
         </section>
 
-        {usage ? (
+        {liveUsage ? (
           <section className="grid gap-2 rounded-3xl border border-white/10 bg-zinc-900/60 p-4 text-center text-sm text-zinc-300 sm:grid-cols-2 md:grid-cols-4 md:p-5">
             <p>
               Lifetime stories used:{" "}
-              <span className="font-semibold text-white">{usage.stories_submitted_count}</span>
+              <span className="font-semibold text-white">{liveUsage.stories_submitted_count}</span>
             </p>
             <p>
-              {usage.has_plus
+              {liveUsage.has_plus
                 ? "Plus is active — publishing can continue."
-                : `Free submissions remaining: ${remainingFreeStories(usage)}`}
+                : `Free submissions remaining: ${remainingFreeStories(liveUsage)}`}
             </p>
             <p>
-              Large videos this month: {usage.large_videos_this_month}/
-              {usage.large_videos_per_month}
+              Large videos this month: {liveUsage.large_videos_this_month}/
+              {liveUsage.large_videos_per_month}
             </p>
-            <p>Stored media: {formatBytes(usage.storage_bytes)} / 10 GB</p>
+            <p>Stored media: {formatBytes(liveUsage.storage_bytes)} / 10 GB</p>
           </section>
         ) : null}
 
