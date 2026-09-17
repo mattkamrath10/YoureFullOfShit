@@ -37,6 +37,11 @@ workflows:
           if [ ! -d "ios/App" ]; then
             npx cap add ios
           fi
+      # cap sync runs `pod install`. Capacitor 8 pods require iOS 15;
+      # a leftover Podfile platform of 14.0 fails CocoaPods resolution.
+      - name: Require iOS 15 for Capacitor pods
+        script: |
+          node scripts/patch-ios-info.mjs
       - name: Sync Capacitor iOS
         script: |
           npx cap sync ios
