@@ -17,7 +17,7 @@ workflows:
         # Bump when shipping a new TestFlight binary. The WKWebView loads
         # https://laststoryteller.com, so Render deploys web UX (including
         # story video loading) without baking Next.js into the IPA.
-        MARKETING_VERSION: "0.1.1"
+        MARKETING_VERSION: "0.1.2"
         NODE_VERSION: "22"
         # Existing App Store Connect app. Do not create a second app.
         APP_STORE_APPLE_ID: "6812527848"
