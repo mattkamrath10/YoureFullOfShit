@@ -80,5 +80,3 @@ workflows:
         # Upload to TestFlight. Do not submit for App Store review.
         submit_to_testflight: true
         submit_to_app_store: false
-        # App Store content-rights / copyright metadata attached on each upload.
-        copyright: 2026 Last Storyteller
