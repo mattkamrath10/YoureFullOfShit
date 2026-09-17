@@ -140,7 +140,8 @@ def main() -> None:
     save_rgb_png(store, ROOT / "public/last-storyteller-book.png", 1024)
     make_og(store, ROOT / "public/og-share.png")
 
-    ico = store.resize((32, 32), Image.Resampling.LANCZOS)
+    # Next/Turbopack's ICO decoder requires PNG-backed ICO frames to be RGBA.
+    ico = store.resize((32, 32), Image.Resampling.LANCZOS).convert("RGBA")
     ico.save(
         ROOT / "app/favicon.ico",
         format="ICO",
