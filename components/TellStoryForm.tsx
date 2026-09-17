@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { usePlusUsage } from "@/components/plus/PlusUsageProvider";
 import { SignInPrompt } from "@/components/social/SignInPrompt";
 import { FreeAccountGate } from "@/components/auth/FreeAccountGate";
 import { submitStory } from "@/lib/submit-story";
@@ -22,6 +23,7 @@ import { canSubmitAnotherStory, remainingFreeStories, type PlusUsage } from "@/l
 
 import { VideoRecorder, type RecordedVideo } from "@/components/VideoRecorder";
 import { StoryBodyField } from "@/components/StoryBodyField";
+import { PlusRefreshActions } from "@/components/plus/PlusRefreshActions";
 import type { Category } from "@/types/database";
 
 const TITLE_MAX = 120;
@@ -35,6 +37,7 @@ export function TellStoryForm({
   usage?: PlusUsage | null;
 }) {
   const { isSignedIn, loading: authLoading } = useAuth();
+  const plusUsage = usePlusUsage();
   const [promptOpen, setPromptOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [categoryId, setCategoryId] = useState("");
@@ -52,10 +55,16 @@ export function TellStoryForm({
   const [submittedId, setSubmittedId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const uploadAbortRef = useRef<AbortController | null>(null);
+  const [blockedLargeVideo, setBlockedLargeVideo] = useState<File | null>(null);
 
-  const hasPlus = Boolean(usage?.has_plus);
-  const plusRequired = Boolean(usage && !canSubmitAnotherStory(usage));
-  const freeLeft = usage ? remainingFreeStories(usage) : null;
+  useEffect(() => {
+    plusUsage.hydrate(usage);
+  }, [plusUsage.hydrate, usage]);
+
+  const liveUsage = plusUsage.usage ?? usage;
+  const hasPlus = Boolean(liveUsage?.has_plus);
+  const plusRequired = Boolean(liveUsage && !canSubmitAnotherStory(liveUsage));
+  const freeLeft = liveUsage ? remainingFreeStories(liveUsage) : null;
 
   function promptForLargeGuestVideo(message: string = GUEST_LARGE_VIDEO_MESSAGE) {
     setMediaError(message);
@@ -96,6 +105,46 @@ export function TellStoryForm({
     if (pending || plusRequired) return false;
     return submitHints.length === 0;
   }, [pending, submitHints, plusRequired]);
+
+  async function refreshSubscription() {
+    const next = await plusUsage.refresh();
+    if (!next) return;
+    if (!blockedLargeVideo) {
+      setMediaError(null);
+      return;
+    }
+    const check = validateMediaFile(blockedLargeVideo, {
+      emailAuth: isSignedIn,
+      hasPlus: next.has_plus,
+    });
+    if (!check.ok) {
+      setMediaError(check.error);
+      return;
+    }
+    setMediaError(null);
+    setBlockedLargeVideo(null);
+    setMedia((prev) => {
+      const duplicate = prev.some(
+        (m) =>
+          m.file.name === blockedLargeVideo.name &&
+          m.file.size === blockedLargeVideo.size,
+      );
+      if (duplicate) return prev;
+      return [
+        ...prev,
+        {
+          id: `${blockedLargeVideo.name}-${blockedLargeVideo.size}-${blockedLargeVideo.lastModified}-${Math.random()}`,
+          file: blockedLargeVideo,
+          mediaType: "video",
+        },
+      ];
+    });
+    if (next.has_plus && shouldUseR2ForVideo(blockedLargeVideo)) {
+      setProcessLabel(
+        `Large video selected (${formatBytes(blockedLargeVideo.size)}). It will upload securely on submit (no compression/split).`,
+      );
+    }
+  }
 
   async function prepareAndAddVideo(file: File) {
     if (authLoading) return;
@@ -144,10 +193,15 @@ export function TellStoryForm({
       if (!isSignedIn && file.size > SUPABASE_VIDEO_MAX) {
         promptForLargeGuestVideo(result.error);
       } else {
+        if (result.error === PLUS_LARGE_VIDEO_MESSAGE) {
+          setBlockedLargeVideo(file);
+        }
         setMediaError(result.error);
       }
       return;
     }
+
+    setBlockedLargeVideo(null);
 
     setMedia((prev) => [
       ...prev,
@@ -208,6 +262,7 @@ export function TellStoryForm({
           isAnonymous,
           displayName,
           media: allMedia,
+          hasPlus,
           signal: controller.signal,
           onUploadProgress: (p: MediaUploadProgress) => {
             setUploadLabel(p.message ?? `Uploading ${p.done}/${p.total}: ${p.currentName}`);
@@ -323,7 +378,7 @@ export function TellStoryForm({
             Type or speak it. Record video separately. Add evidence if you want.
             The community decides what they believe.
           </p>
-          {usage && !hasPlus ? (
+          {liveUsage && !hasPlus ? (
             <p className="mx-auto max-w-xl rounded-2xl border border-white/10 bg-black/30 px-4 py-2 text-sm text-zinc-300 md:max-w-2xl">
               {plusRequired
                 ? "You have used both free story submissions. Last Storyteller Plus ($1.99/month) is required to keep publishing."
@@ -332,7 +387,7 @@ export function TellStoryForm({
           ) : null}
           {hasPlus ? (
             <p className="mx-auto max-w-xl rounded-2xl border border-amber-400/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-100 md:max-w-2xl">
-              Plus is active. Large videos: {usage?.large_videos_this_month ?? 0}/10 this month.
+              Plus is active. Large videos: {liveUsage?.large_videos_this_month ?? 0}/10 this month.
             </p>
           ) : null}
           {plusRequired ? (
@@ -493,9 +548,14 @@ export function TellStoryForm({
                 Images ≤ 10 MB · Free: video ≤ 50 MB · Plus: large video via R2 up to 1 GB · PDFs ≤ 20 MB
               </p>
               {isSignedIn && !hasPlus && (
-                <p className="mt-2 rounded-2xl border border-sky-400/30 bg-sky-500/10 px-3 py-2 text-sm text-sky-100">
-                  {PLUS_LARGE_VIDEO_MESSAGE}
-                </p>
+                <div className="mt-2 space-y-3 rounded-2xl border border-sky-400/30 bg-sky-500/10 px-3 py-3 text-sm text-sky-100">
+                  <p>{PLUS_LARGE_VIDEO_MESSAGE}</p>
+                  <PlusRefreshActions
+                    refreshing={plusUsage.refreshing}
+                    error={plusUsage.error}
+                    onRefresh={() => void refreshSubscription()}
+                  />
+                </div>
               )}
             </div>
 
@@ -559,7 +619,7 @@ export function TellStoryForm({
               />
             </label>
 
-            {mediaError && (
+            {mediaError && mediaError !== PLUS_LARGE_VIDEO_MESSAGE && (
               <p className="text-center text-sm text-red-300" role="alert">
                 {mediaError}
               </p>

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { AuthNav } from "@/components/auth/AuthNav";
+import { PlusNavControl } from "@/components/plus/PlusNavControl";
 import { HOME_CAROUSEL_RESET_EVENT } from "@/lib/home-navigation";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -49,6 +50,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             >
               My Stories
             </Link>
+            <PlusNavControl layout="desktop" />
             <AuthNav />
             <Link
               href="/tell"
@@ -60,6 +62,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           {/* Mobile: search + menu */}
           <div className="flex items-center gap-1 min-[700px]:hidden">
+            <PlusNavControl layout="mobile-bar" />
             <Link
               href="/#feed"
               className="inline-flex h-10 w-10 items-center justify-center rounded-full text-orange-400"
@@ -95,6 +98,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               >
                 My Stories
               </Link>
+              <PlusNavControl layout="mobile-menu" onNavigate={() => setMenuOpen(false)} />
               <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2">
                 <AuthNav />
               </div>
