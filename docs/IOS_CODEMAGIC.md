@@ -76,8 +76,10 @@ Each Codemagic build attaches that answer automatically:
    into `ios/App/App/Info.plist`.
 2. `codemagic.yaml` re-applies the same key with PlistBuddy so a Capacitor sync
    cannot drop it.
-3. Publishing also sets `copyright: 2026 Last Storyteller` (the YAML field
-   Codemagic attaches for content rights / copyright).
+
+Do not set `copyright` in `codemagic.yaml` while `submit_to_app_store` is
+`false`. Codemagic rejects that combination. Keep copyright in App Store
+Connect / `store/app-store/listing.json` until you turn on App Store review.
 
 Do not set `ITSAppUsesNonExemptEncryption` to true. This app does not use custom
 encryption. Do not put Stripe or other server secrets in the YAML.
