@@ -62,6 +62,25 @@ export function parsePlusUsage(data: unknown): PlusUsage | null {
   };
 }
 
+export function buildFallbackPlusUsage(args: {
+  hasPlus: boolean;
+  storiesSubmittedCount: number;
+}): PlusUsage {
+  return {
+    authenticated: true,
+    stories_submitted_count: args.storiesSubmittedCount,
+    has_plus: args.hasPlus,
+    plus_expires_at: null,
+    plus_lifetime: false,
+    large_videos_this_month: 0,
+    storage_bytes: 0,
+    free_story_limit: 2,
+    large_videos_per_month: 10,
+    max_storage_bytes: 10 * 1024 * 1024 * 1024,
+    max_video_bytes: 1024 * 1024 * 1024,
+  };
+}
+
 export function applyEntitlementRefreshResult(
   previous: PlusUsage | null,
   result: { ok: true; usage: PlusUsage } | { ok: false },

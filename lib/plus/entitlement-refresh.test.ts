@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { LARGE_VIDEO_THRESHOLD_BYTES } from "./rules.ts";
 import {
@@ -7,6 +8,7 @@ import {
   parsePlusUsage,
   PLUS_USAGE_ENDPOINT,
   STORY_SUBMISSION_ENDPOINT,
+  buildFallbackPlusUsage,
   canSubmitAnotherStory,
   plusIdentityChanged,
   plusNavAppearance,
@@ -153,4 +155,32 @@ test("shared Plus state is reset whenever authenticated user changes", () => {
   assert.equal(plusIdentityChanged("plus-user", "free-user"), true);
   assert.equal(plusIdentityChanged("plus-user", "plus-user"), false);
   assert.equal(plusIdentityChanged("plus-user", null), true);
+});
+
+test("broken usage details fall back to authoritative user_has_plus result", () => {
+  const fallback = buildFallbackPlusUsage({
+    hasPlus: true,
+    storiesSubmittedCount: 2,
+  });
+  assert.equal(fallback.has_plus, true);
+  assert.equal(canSubmitAnotherStory(fallback), true);
+  assert.equal(
+    largeVideoAllowedByClientEntitlement({
+      hasPlus: fallback.has_plus,
+      byteSize: Math.round(394.4 * 1024 * 1024),
+    }),
+    true,
+  );
+});
+
+test("A0 usage SQL does not query a nonexistent reservation status column", () => {
+  const sql = readFileSync(
+    new URL(
+      "../../supabase/migrations/20260918_fix_get_plus_usage_reservations.sql",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(sql, /from public\.r2_upload_reservations\s+where user_id = uid;/);
+  assert.doesNotMatch(sql, /status\s*=\s*'reserved'/);
 });
