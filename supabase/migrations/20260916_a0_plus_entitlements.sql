@@ -512,8 +512,7 @@ begin
 
   select stored + coalesce(sum(byte_size), 0) into stored
   from public.r2_upload_reservations
-  where user_id = uid
-    and status = 'reserved';
+  where user_id = uid;
 
   return jsonb_build_object(
     'authenticated', true,

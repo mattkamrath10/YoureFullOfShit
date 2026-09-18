@@ -14,6 +14,7 @@ export type PlusUsage = {
 
 /** Cookie/session RPC endpoint. Server uses auth.uid(); never a client-supplied user id. */
 export const PLUS_USAGE_ENDPOINT = "/api/me/plus";
+export const STORY_SUBMISSION_ENDPOINT = "/api/stories";
 
 export const PLUS_USAGE_REFRESH_ERROR =
   "Could not refresh your Plus membership. Check your connection and try again.";
@@ -26,6 +27,14 @@ export function plusNavAppearance(args: {
 }): PlusNavAppearance {
   if (!args.isSignedIn) return "hidden";
   return args.hasPlus ? "plus-member" : "get-plus";
+}
+
+/** Shared Plus state must never survive an authenticated account change. */
+export function plusIdentityChanged(
+  previousUserId: string | null,
+  currentUserId: string | null,
+): boolean {
+  return previousUserId !== currentUserId;
 }
 
 function asInt(value: unknown, fallback: number): number {
@@ -50,6 +59,25 @@ export function parsePlusUsage(data: unknown): PlusUsage | null {
     large_videos_per_month: asInt(row.large_videos_per_month, 10),
     max_storage_bytes: asInt(row.max_storage_bytes, 10 * 1024 * 1024 * 1024),
     max_video_bytes: asInt(row.max_video_bytes, 1024 * 1024 * 1024),
+  };
+}
+
+export function buildFallbackPlusUsage(args: {
+  hasPlus: boolean;
+  storiesSubmittedCount: number;
+}): PlusUsage {
+  return {
+    authenticated: true,
+    stories_submitted_count: args.storiesSubmittedCount,
+    has_plus: args.hasPlus,
+    plus_expires_at: null,
+    plus_lifetime: false,
+    large_videos_this_month: 0,
+    storage_bytes: 0,
+    free_story_limit: 2,
+    large_videos_per_month: 10,
+    max_storage_bytes: 10 * 1024 * 1024 * 1024,
+    max_video_bytes: 1024 * 1024 * 1024,
   };
 }
 

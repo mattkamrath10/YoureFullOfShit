@@ -6,20 +6,24 @@ export function PlusRefreshActions({
   refreshing,
   error,
   onRefresh,
+  showGetPlus = true,
 }: {
   refreshing: boolean;
   error: string | null;
   onRefresh: () => void;
+  showGetPlus?: boolean;
 }) {
   return (
     <div className="space-y-2">
       <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
-        <Link
-          href="/plus"
-          className="rounded-full bg-orange-500 px-5 py-2.5 text-center text-sm font-black uppercase tracking-wide text-black"
-        >
-          Get Plus
-        </Link>
+        {showGetPlus ? (
+          <Link
+            href="/plus"
+            className="rounded-full bg-orange-500 px-5 py-2.5 text-center text-sm font-black uppercase tracking-wide text-black"
+          >
+            Get Plus
+          </Link>
+        ) : null}
         <button
           type="button"
           disabled={refreshing}

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { LARGE_VIDEO_THRESHOLD_BYTES } from "./rules.ts";
 import {
@@ -6,15 +7,19 @@ import {
   createRefreshLock,
   parsePlusUsage,
   PLUS_USAGE_ENDPOINT,
+  STORY_SUBMISSION_ENDPOINT,
+  buildFallbackPlusUsage,
+  canSubmitAnotherStory,
+  plusIdentityChanged,
   plusNavAppearance,
   type PlusUsage,
 } from "./usage.ts";
 import { largeVideoAllowedByClientEntitlement } from "./entitlement-refresh.ts";
 
-function usage(hasPlus: boolean): PlusUsage {
+function usage(hasPlus: boolean, storiesSubmittedCount = 0): PlusUsage {
   return {
     authenticated: true,
-    stories_submitted_count: 0,
+    stories_submitted_count: storiesSubmittedCount,
     has_plus: hasPlus,
     plus_expires_at: null,
     plus_lifetime: false,
@@ -43,14 +48,16 @@ test("refresh uses the authoritative Plus usage endpoint", () => {
 test("successful refresh from non-Plus to Plus updates shared entitlement state", () => {
   const next = applyEntitlementRefreshResult(usage(false), {
     ok: true,
-    usage: usage(true),
+    usage: usage(true, 2),
   });
   assert.equal(next?.has_plus, true);
   assert.equal(plusNavAppearance({ isSignedIn: true, hasPlus: Boolean(next?.has_plus) }), "plus-member");
+  assert.equal(next ? canSubmitAnotherStory(next) : false, true);
 });
 
-test("a >50 MB upload blocked by stale client entitlement is allowed after Plus refresh", () => {
-  const byteSize = LARGE_VIDEO_THRESHOLD_BYTES + 1;
+test("a 394.4 MB upload blocked by stale state is allowed after Plus refresh", () => {
+  const byteSize = Math.round(394.4 * 1024 * 1024);
+  assert.ok(byteSize > LARGE_VIDEO_THRESHOLD_BYTES);
   assert.equal(largeVideoAllowedByClientEntitlement({ hasPlus: false, byteSize }), false);
   const refreshed = applyEntitlementRefreshResult(usage(false), {
     ok: true,
@@ -120,4 +127,60 @@ test("server-side Plus authorization is not replaced by a client claim", () => {
     largeVideoAllowedByClientEntitlement({ hasPlus: false, byteSize: 80 * 1024 * 1024 }),
     false,
   );
+  assert.equal(STORY_SUBMISSION_ENDPOINT, "/api/stories");
+});
+
+test("free user at two stories is blocked while Plus user is not", () => {
+  assert.equal(canSubmitAnotherStory(usage(false, 2)), false);
+  assert.equal(canSubmitAnotherStory(usage(true, 2)), true);
+});
+
+test("top navigation and submission quota consume the same refreshed result", () => {
+  const current = applyEntitlementRefreshResult(usage(false, 2), {
+    ok: true,
+    usage: usage(true, 2),
+  });
+  assert.ok(current);
+  assert.equal(
+    plusNavAppearance({
+      isSignedIn: true,
+      hasPlus: current.has_plus,
+    }),
+    "plus-member",
+  );
+  assert.equal(canSubmitAnotherStory(current), true);
+});
+
+test("shared Plus state is reset whenever authenticated user changes", () => {
+  assert.equal(plusIdentityChanged("plus-user", "free-user"), true);
+  assert.equal(plusIdentityChanged("plus-user", "plus-user"), false);
+  assert.equal(plusIdentityChanged("plus-user", null), true);
+});
+
+test("broken usage details fall back to authoritative user_has_plus result", () => {
+  const fallback = buildFallbackPlusUsage({
+    hasPlus: true,
+    storiesSubmittedCount: 2,
+  });
+  assert.equal(fallback.has_plus, true);
+  assert.equal(canSubmitAnotherStory(fallback), true);
+  assert.equal(
+    largeVideoAllowedByClientEntitlement({
+      hasPlus: fallback.has_plus,
+      byteSize: Math.round(394.4 * 1024 * 1024),
+    }),
+    true,
+  );
+});
+
+test("A0 usage SQL does not query a nonexistent reservation status column", () => {
+  const sql = readFileSync(
+    new URL(
+      "../../supabase/migrations/20260918_fix_get_plus_usage_reservations.sql",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(sql, /from public\.r2_upload_reservations\s+where user_id = uid;/);
+  assert.doesNotMatch(sql, /status\s*=\s*'reserved'/);
 });

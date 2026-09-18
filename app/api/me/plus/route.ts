@@ -1,6 +1,6 @@
 import { apiError, createUserClientFromRequest, getAuthenticatedUser } from "@/lib/api/auth";
 import { isEmailAuthUser } from "@/lib/auth/session";
-import { parsePlusUsage } from "@/lib/plus/usage";
+import { getAuthoritativePlusUsage } from "@/lib/plus/authoritative-usage";
 
 /**
  * Read-only Plus usage for the signed-in caller.
@@ -20,11 +20,7 @@ export async function GET(request: Request) {
       return apiError("UNAUTHORIZED", "Authentication required.", 401);
     }
 
-    const { data, error } = await supabase.rpc("get_plus_usage");
-    if (error) {
-      return apiError("PLUS_USAGE_UNAVAILABLE", "Could not load Plus membership.", 503);
-    }
-    const usage = parsePlusUsage(data);
+    const usage = await getAuthoritativePlusUsage(supabase, user.id);
     if (!usage) {
       return apiError("PLUS_USAGE_UNAVAILABLE", "Could not load Plus membership.", 503);
     }

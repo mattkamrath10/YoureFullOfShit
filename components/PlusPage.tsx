@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { PlusRefreshActions } from "@/components/plus/PlusRefreshActions";
+import { usePlusUsage } from "@/components/plus/PlusUsageProvider";
 import {
   FREE_TIER_FEATURES,
   PLUS_FEATURES,
@@ -16,6 +18,8 @@ import {
 
 export function PlusPage() {
   const { isSignedIn, loading, user } = useAuth();
+  const plusUsage = usePlusUsage();
+  const hasPlus = Boolean(plusUsage.usage?.has_plus);
   const [native, setNative] = useState(isNativeShellWindow);
   const [stripeConfigured, setStripeConfigured] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -105,6 +109,21 @@ export function PlusPage() {
         <Tier title="Free" items={FREE_TIER_FEATURES} />
         <Tier title="Last Storyteller Plus" items={PLUS_FEATURES} featured />
       </div>
+      {isSignedIn ? (
+        <div className="space-y-3">
+          {hasPlus ? (
+            <p className="text-sm font-bold text-amber-200">
+              Plus is active on this account.
+            </p>
+          ) : null}
+          <PlusRefreshActions
+            refreshing={plusUsage.refreshing}
+            error={plusUsage.error}
+            onRefresh={() => void plusUsage.refresh()}
+            showGetPlus={false}
+          />
+        </div>
+      ) : null}
       {surface === "sign-in" ? (
         <Link
           href="/sign-in"
@@ -113,7 +132,13 @@ export function PlusPage() {
           Sign in to upgrade
         </Link>
       ) : surface === "ios-iap" ? (
-        <NativePlusActions userId={user?.id ?? null} busy={busy} setBusy={setBusy} setMessage={setMessage} />
+        <NativePlusActions
+          userId={user?.id ?? null}
+          busy={busy}
+          setBusy={setBusy}
+          setMessage={setMessage}
+          onEntitlementChanged={plusUsage.refresh}
+        />
       ) : surface === "web-stripe" ? (
         <div className="flex flex-col items-center gap-3">
           <button
@@ -148,11 +173,13 @@ function NativePlusActions({
   busy,
   setBusy,
   setMessage,
+  onEntitlementChanged,
 }: {
   userId: string | null;
   busy: boolean;
   setBusy: (v: boolean) => void;
   setMessage: (v: string | null) => void;
+  onEntitlementChanged: () => Promise<unknown>;
 }) {
   async function sendToServer(signedTransaction: string) {
     const res = await fetch("/api/billing/apple/transactions", {
@@ -175,6 +202,7 @@ function NativePlusActions({
       const PlusStore = (await import("@/lib/native/plus-store")).default;
       const result = await PlusStore.purchase({ appAccountToken: userId });
       await sendToServer(result.signedTransaction);
+      await onEntitlementChanged();
       setMessage("Plus is now active on this Last Storyteller account.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Purchase failed.");
@@ -190,6 +218,7 @@ function NativePlusActions({
       const PlusStore = (await import("@/lib/native/plus-store")).default;
       const result = await PlusStore.restore();
       await sendToServer(result.signedTransaction);
+      await onEntitlementChanged();
       setMessage("Purchases restored.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Restore failed.");
