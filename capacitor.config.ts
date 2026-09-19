@@ -9,7 +9,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
  */
 export const IOS_BUNDLE_ID = "com.laststoryteller.app";
 export const IOS_APP_NAME = "Last Storyteller";
-export const IOS_MARKETING_VERSION = "0.1.3";
+export const IOS_MARKETING_VERSION = "0.1.4";
 export const PRODUCTION_APP_URL = "https://laststoryteller.com";
 
 const config: CapacitorConfig = {
