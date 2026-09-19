@@ -81,7 +81,7 @@ export function DiscoverHome({
               alt="Last Storyteller open book and story path"
               width={1024}
               height={1024}
-              sizes="(max-width: 640px) calc(100vw - 2rem), (max-width: 1024px) 70vw, 42rem"
+              sizes="(max-width: 639px) calc(100vw - 2rem), (max-width: 767px) 34rem, 42rem"
               priority
               className="relative z-10 block h-auto w-full object-contain"
             />
