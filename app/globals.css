@@ -65,8 +65,6 @@ textarea {
 .hero-artwork {
   position: relative;
   isolation: isolate;
-  overflow: hidden;
-  border-radius: 42%;
 }
 
 .hero-artwork::before {
@@ -85,21 +83,10 @@ textarea {
 }
 
 .hero-artwork img {
-  transform: scale(1.12);
-  -webkit-mask-image: radial-gradient(
-    ellipse 67% 74% at 50% 54%,
-    #000 46%,
-    rgba(0, 0, 0, 0.96) 67%,
-    rgba(0, 0, 0, 0.58) 85%,
-    transparent 100%
-  );
-  mask-image: radial-gradient(
-    ellipse 67% 74% at 50% 54%,
-    #000 46%,
-    rgba(0, 0, 0, 0.96) 67%,
-    rgba(0, 0, 0, 0.58) 85%,
-    transparent 100%
-  );
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
 }
 
 .hero-artwork__atmosphere {
