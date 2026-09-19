@@ -38,6 +38,8 @@ const USAGE = {
     "Last Storyteller uses the camera so you can record a video story.",
   NSMicrophoneUsageDescription:
     "Last Storyteller uses the microphone so you can record video stories and use voice typing.",
+  NSSpeechRecognitionUsageDescription:
+    "Last Storyteller uses speech recognition so you can dictate your story with the microphone.",
   NSPhotoLibraryUsageDescription:
     "Last Storyteller lets you attach photos and videos you already have to a story.",
   NSPhotoLibraryAddUsageDescription:
