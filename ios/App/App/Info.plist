@@ -51,6 +51,8 @@
 	<string>Last Storyteller uses the camera so you can record a video story.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Last Storyteller uses the microphone so you can record video stories and use voice typing.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Last Storyteller uses speech recognition so you can dictate your story with the microphone.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Last Storyteller lets you attach photos and videos you already have to a story.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

@@ -2,10 +2,10 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
-  appendTranscript,
-  getSpeechRecognitionCtor,
-  type SpeechRecognitionLike,
-} from "@/lib/speech";
+  isVoiceTypingSupported,
+  startVoiceTyping,
+  type VoiceTypingSession,
+} from "@/lib/voice-typing";
 
 export function StoryBodyField({
   value,
@@ -21,11 +21,10 @@ export function StoryBodyField({
   const [listening, setListening] = useState(false);
   const [speechError, setSpeechError] = useState<string | null>(null);
   const [supported, setSupported] = useState(false);
-  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const sessionRef = useRef<VoiceTypingSession | null>(null);
   const valueRef = useRef(value);
   const committedRef = useRef(value);
   const fromSpeechRef = useRef(false);
-  const intentionalStop = useRef(false);
 
   useEffect(() => {
     if (!fromSpeechRef.current) {
@@ -36,122 +35,80 @@ export function StoryBodyField({
   }, [value]);
 
   useEffect(() => {
-    setSupported(Boolean(getSpeechRecognitionCtor()));
+    let cancelled = false;
+    void isVoiceTypingSupported().then((ok) => {
+      if (!cancelled) setSupported(ok);
+    });
     return () => {
-      intentionalStop.current = true;
-      try {
-        recognitionRef.current?.abort();
-      } catch {
-        /* ignore */
-      }
-      recognitionRef.current = null;
+      cancelled = true;
+      const session = sessionRef.current;
+      sessionRef.current = null;
+      void session?.stop();
     };
   }, []);
 
   const statusHint = useMemo(() => {
     if (!supported) {
-      return "Voice typing isn’t supported in this browser. You can type your story normally.";
+      return "Voice typing isn't supported here. You can type your story normally.";
     }
-    if (listening) return "Listening… tap Stop when you’re done.";
+    if (listening) return "Listening... tap Stop when you're done.";
     return "Optional if you attach video or evidence.";
   }, [supported, listening]);
 
-  function stopListening() {
-    intentionalStop.current = true;
-    try {
-      recognitionRef.current?.stop();
-    } catch {
-      /* ignore */
-    }
+  async function stopListening() {
+    const session = sessionRef.current;
+    sessionRef.current = null;
     setListening(false);
+    if (session) {
+      try {
+        await session.stop();
+      } catch {
+        /* ignore */
+      }
+    }
   }
 
-  function startListening() {
-    const Ctor = getSpeechRecognitionCtor();
-    if (!Ctor) {
-      setSpeechError(
-        "Voice typing isn’t supported in this browser. You can type your story normally.",
-      );
-      return;
-    }
+  async function startListening() {
     setSpeechError(null);
-    intentionalStop.current = false;
     committedRef.current = valueRef.current;
 
     try {
-      recognitionRef.current?.abort();
-    } catch {
-      /* ignore */
-    }
-
-    const recognition = new Ctor();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = "en-US";
-
-    recognition.onresult = (event) => {
-      let finals = "";
-      let interims = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const result = event.results[i];
-        const piece = result[0]?.transcript ?? "";
-        if (result.isFinal) finals += piece;
-        else interims += piece;
-      }
-
-      if (finals.trim()) {
-        const next = appendTranscript(committedRef.current, finals).slice(
-          0,
-          maxLength,
-        );
-        committedRef.current = next;
-        fromSpeechRef.current = true;
-        valueRef.current = next;
-        onChange(next);
-        return;
-      }
-
-      if (interims.trim()) {
-        const preview = appendTranscript(committedRef.current, interims).slice(
-          0,
-          maxLength,
-        );
-        fromSpeechRef.current = true;
-        valueRef.current = preview;
-        onChange(preview);
-      }
-    };
-
-    recognition.onerror = (event) => {
-      console.error("[last-storyteller speech]", event.error);
-      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-        setSpeechError("Microphone access was denied. You can still type your story.");
-      } else if (event.error === "no-speech") {
-        setSpeechError("No speech detected. Tap the microphone and try again.");
-      } else if (event.error !== "aborted") {
-        setSpeechError("Voice typing had a problem. You can keep typing normally.");
-      }
-      setListening(false);
-    };
-
-    recognition.onend = () => {
-      setListening(false);
-    };
-
-    recognitionRef.current = recognition;
-    try {
-      recognition.start();
+      const session = await startVoiceTyping({
+        getCommitted: () => committedRef.current,
+        setCommitted: (next) => {
+          committedRef.current = next;
+        },
+        maxLength,
+        callbacks: {
+          onText: (next) => {
+            fromSpeechRef.current = true;
+            valueRef.current = next;
+            onChange(next);
+          },
+          onError: (message) => {
+            setSpeechError(message);
+            setListening(false);
+            sessionRef.current = null;
+          },
+          onEnd: () => {
+            setListening(false);
+            sessionRef.current = null;
+          },
+        },
+      });
+      sessionRef.current = session;
       setListening(true);
     } catch (e) {
-      console.error("[last-storyteller speech start]", e);
+      console.error("[last-storyteller voice typing]", e);
       setSpeechError("Could not start voice typing. You can type normally.");
       setListening(false);
+      sessionRef.current = null;
     }
   }
 
   function toggleMic() {
-    if (listening) stopListening();
-    else startListening();
+    if (listening) void stopListening();
+    else void startListening();
   }
 
   return (
@@ -203,8 +160,8 @@ export function StoryBodyField({
             type="button"
             disabled
             aria-disabled="true"
-            aria-label="Voice typing is not supported in this browser"
-            title="Voice typing isn’t supported in this browser"
+            aria-label="Voice typing is not supported here"
+            title="Voice typing isn't supported here"
             className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-2 text-xs font-black uppercase tracking-wide text-zinc-500"
           >
             Mic
